@@ -98,21 +98,97 @@ function Section({ title, subtitle, children }) {
   );
 }
 
-// ── Issue Card ────────────────────────────────────────────────────────────────
-function IssueCard({ issue }) {
+// ── Issue Detail Modal ────────────────────────────────────────────────────────
+function IssueModal({ issue, onClose }) {
+  if (!issue) return null;
   const color = issue.count > 50 ? HZ.red : issue.count > 20 ? HZ.orange : HZ.yellow;
   return (
-    <div style={{
-      background: "#FFFFFF",
-      borderRadius: 10,
-      padding: "12px 16px",
-      border: `1px solid ${HZ.neutral200}`,
-      borderLeft: `3px solid ${color}`,
-      marginBottom: 8,
-    }}>
+    <div
+      className="hz-dialog-overlay"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="hz-dialog" style={{ maxWidth: 720, width: "90vw" }}>
+        <div className="hz-dialog__header">
+          <div>
+            <div className="hz-dialog__title">{issue.type}</div>
+            <div className="hz-text-body-s-regular" style={{ color: HZ.neutral500, marginTop: 2 }}>{issue.description}</div>
+          </div>
+          <button className="hz-dialog__close" onClick={onClose}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div className="hz-dialog__body" style={{ padding: 0, maxHeight: "60vh", overflowY: "auto" }}>
+          {(!issue.rows || issue.rows.length === 0) ? (
+            <div style={{ padding: "32px", textAlign: "center" }}>
+              <p className="hz-text-body-r-regular" style={{ color: HZ.neutral500 }}>Tidak ada detail data tersedia.</p>
+            </div>
+          ) : (
+            <div className="hz-table-container" style={{ border: "none", borderRadius: 0 }}>
+              <table className="hz-table">
+                <thead>
+                  <tr>
+                    <th>Tanggal</th>
+                    <th>Conversation ID</th>
+                    <th>Nama Nasabah</th>
+                    <th>Nama Agent</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {issue.rows.map((row, i) => (
+                    <tr key={i}>
+                      <td>{row.date || "-"}</td>
+                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>{row.conversation_id}</td>
+                      <td>{row.customer_name}</td>
+                      <td>{row.agent_name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <div className="hz-dialog__footer" style={{ justifyContent: "space-between" }}>
+          <span className="hz-text-body-s-regular" style={{ color: HZ.neutral500 }}>
+            {issue.rows?.length || 0} baris ditemukan
+          </span>
+          <span className="hz-badge" style={{ background: color + "20", color }}>
+            Total: {issue.count}x
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Issue Card ────────────────────────────────────────────────────────────────
+function IssueCard({ issue, onClick }) {
+  const color = issue.count > 50 ? HZ.red : issue.count > 20 ? HZ.orange : HZ.yellow;
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: "#FFFFFF",
+        borderRadius: 10,
+        padding: "12px 16px",
+        border: `1px solid ${HZ.neutral200}`,
+        borderLeft: `3px solid ${color}`,
+        marginBottom: 8,
+        cursor: "pointer",
+        transition: "box-shadow 150ms ease, transform 150ms ease",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,.08)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "none"; }}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span className="hz-text-body-r-bold" style={{ color: HZ.neutral900 }}>{issue.type}</span>
-        <span className="hz-text-body-r-bold" style={{ color, fontFamily: "monospace" }}>{issue.count}x</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span className="hz-text-body-r-bold" style={{ color, fontFamily: "monospace" }}>{issue.count}x</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={HZ.neutral400} strokeWidth="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
       </div>
       <div className="hz-text-body-s-regular" style={{ color: HZ.neutral600, marginTop: 4 }}>{issue.description}</div>
     </div>
@@ -181,8 +257,9 @@ export default function App() {
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState(null);
   const [showConfig, setShowConfig] = useState(false);
-  const [callData, setCallData]   = useState(null);
-  const [kycData, setKycData]     = useState(null);
+  const [callData, setCallData]       = useState(null);
+  const [kycData, setKycData]         = useState(null);
+  const [selectedIssue, setSelectedIssue] = useState(null);
   const rawCache = useRef({});
 
   const handleFetch = useCallback(async () => {
@@ -498,12 +575,17 @@ export default function App() {
 
         {/* ── Issues Section ── */}
         {data?.issues?.length > 0 && (
-          <Section title="Identifikasi Masalah" subtitle="Masalah teridentifikasi dari Summary, Topic, dan Feedback">
+          <Section title="Identifikasi Masalah" subtitle="Klik kartu untuk melihat detail percakapan">
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {data.issues.map((issue, i) => <IssueCard key={i} issue={issue} />)}
+              {data.issues.map((issue, i) => (
+                <IssueCard key={i} issue={issue} onClick={() => setSelectedIssue(issue)} />
+              ))}
             </div>
           </Section>
         )}
+
+        {/* ── Issue Detail Modal ── */}
+        {selectedIssue && <IssueModal issue={selectedIssue} onClose={() => setSelectedIssue(null)} />}
 
         {/* ── Footer ── */}
         <div style={{ textAlign: "center", padding: "20px 0", borderTop: `1px solid ${HZ.neutral200}`, marginTop: 20 }}>

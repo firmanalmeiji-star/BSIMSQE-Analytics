@@ -68,16 +68,29 @@ export function processCallData(rows, dateFrom, dateTo) {
   });
 
   // Issues
+  const toDetail = rows => rows.map(r => ({
+    date:            (r.created_at || "").substring(0, 10),
+    conversation_id: r.conversation_id || r.id || "-",
+    customer_name:   r.cust_name || "-",
+    agent_name:      r.agent_name || "-",
+  }));
+
   const issues = [];
-  if (tidakAdaSuara + terputusSuara > 0) issues.push({ type: "Audio - Tidak Ada Suara Nasabah", description: "Nasabah tidak bisa berbicara/didengar agent. Dominan di Guest Mode", count: tidakAdaSuara + terputusSuara });
-  if (suaraAgent > 0) issues.push({ type: "Audio - Suara Agent Tidak Didengar", description: "Agent bicara tapi nasabah tidak dengar", count: suaraAgent });
-  const muteC = fbs.filter(f => /mute|mematikan/i.test(f)).length;
-  if (muteC > 0) issues.push({ type: "Agent Mute Complaint", description: "Feedback: agent mematikan suara/mikropon", count: muteC });
-  const putusC = fbs.filter(f => putusKw.some(k => f.toLowerCase().includes(k))).length;
-  if (putusC > 0) issues.push({ type: "Panggilan Terputus", description: "Panggilan terputus sebelum selesai", count: putusC });
-  const guestAudio = filtered.filter(r => String(r.guest_mode).toUpperCase() === "TRUE" && ["Panggilan diakhiri (Tidak ada Suara nasabah)", "Panggilan diakhiri (Suara agent tidak didengar nasabah)"].includes(r.Topic)).length;
+  const audioNoSoundRows = filtered.filter(r => ["Panggilan diakhiri (Tidak ada Suara nasabah)", "Terputus (Suara nasabah tidak ada)"].includes(r.Topic));
+  if (audioNoSoundRows.length > 0) issues.push({ type: "Audio - Tidak Ada Suara Nasabah", description: "Nasabah tidak bisa berbicara/didengar agent. Dominan di Guest Mode", count: audioNoSoundRows.length, rows: toDetail(audioNoSoundRows) });
+
+  const agentNoHearRows = filtered.filter(r => r.Topic === "Panggilan diakhiri (Suara agent tidak didengar nasabah)");
+  if (agentNoHearRows.length > 0) issues.push({ type: "Audio - Suara Agent Tidak Didengar", description: "Agent bicara tapi nasabah tidak dengar", count: agentNoHearRows.length, rows: toDetail(agentNoHearRows) });
+
+  const muteRows = filtered.filter(r => /mute|mematikan/i.test(r.Feedback || ""));
+  if (muteRows.length > 0) issues.push({ type: "Agent Mute Complaint", description: "Feedback: agent mematikan suara/mikropon", count: muteRows.length, rows: toDetail(muteRows) });
+
+  const putusRows = filtered.filter(r => putusKw.some(k => (r.Feedback || "").toLowerCase().includes(k)));
+  if (putusRows.length > 0) issues.push({ type: "Panggilan Terputus", description: "Panggilan terputus sebelum selesai", count: putusRows.length, rows: toDetail(putusRows) });
+
+  const guestAudioRows = filtered.filter(r => String(r.guest_mode).toUpperCase() === "TRUE" && ["Panggilan diakhiri (Tidak ada Suara nasabah)", "Panggilan diakhiri (Suara agent tidak didengar nasabah)"].includes(r.Topic));
   const totalAudio = tidakAdaSuara + suaraAgent;
-  if (totalAudio > 10 && guestAudio / totalAudio > 0.6) issues.push({ type: "Guest Mode Audio Disproportion", description: `Guest = ${(guestAudio / totalAudio * 100).toFixed(0)}% audio issues vs ${(guestMode / total * 100).toFixed(0)}% total calls`, count: guestAudio });
+  if (totalAudio > 10 && guestAudioRows.length / totalAudio > 0.6) issues.push({ type: "Guest Mode Audio Disproportion", description: `Guest = ${(guestAudioRows.length / totalAudio * 100).toFixed(0)}% audio issues vs ${(guestMode / total * 100).toFixed(0)}% total calls`, count: guestAudioRows.length, rows: toDetail(guestAudioRows) });
   issues.sort((a, b) => b.count - a.count);
 
   return {
@@ -134,17 +147,29 @@ export function processKYCData(rows, dateFrom, dateTo) {
     if (r.kyc_status === "FAILED") dailyMap[d].failed++;
   });
 
+  const toDetailKyc = rows => rows.map(r => ({
+    date:            (r.created_at || "").substring(0, 10),
+    conversation_id: r.conversation_id || r.id || "-",
+    customer_name:   r.cust_name || "-",
+    agent_name:      r.agent_name || "-",
+  }));
+
   const issues = [];
-  const videoI = filtered.filter(r => (r.Topic || "").includes("Video") || (r.Conversation_Summary || "").toLowerCase().includes("video")).length;
-  if (videoI > 0) issues.push({ type: "Video Nasabah Tidak Muncul", description: "Video nasabah tidak muncul di sisi agent", count: videoI });
-  const discI = filtered.filter(r => (r.Topic || "").includes("terputus")).length;
-  if (discI > 0) issues.push({ type: "Nasabah Terputus", description: "Koneksi terputus saat verifikasi KYC", count: discI });
-  const ktpI = filtered.filter(r => (r.rejection_reason || "").includes("KTP")).length;
-  if (ktpI > 0) issues.push({ type: "KTP Rusak/Tidak Jelas", description: "Foto KTP tidak terbaca", count: ktpI });
-  const connI = filtered.filter(r => (r.Topic || "").includes("Koneksi")).length;
-  if (connI > 0) issues.push({ type: "Koneksi Tidak Stabil", description: "Jaringan tidak stabil, video call gagal", count: connI });
-  const dataI = filtered.filter(r => ["Nama Ibu Kandung Tidak Sesuai", "Tempat Lahir Tidak Sesuai", "Tanggal Lahir Tidak Sesuai"].includes((r.rejection_reason || "").trim())).length;
-  if (dataI > 0) issues.push({ type: "Data Tidak Sesuai", description: "Data verifikasi tidak cocok dengan KTP", count: dataI });
+  const videoRows = filtered.filter(r => (r.Topic || "").includes("Video") || (r.Conversation_Summary || "").toLowerCase().includes("video"));
+  if (videoRows.length > 0) issues.push({ type: "Video Nasabah Tidak Muncul", description: "Video nasabah tidak muncul di sisi agent", count: videoRows.length, rows: toDetailKyc(videoRows) });
+
+  const discRows = filtered.filter(r => (r.Topic || "").includes("terputus"));
+  if (discRows.length > 0) issues.push({ type: "Nasabah Terputus", description: "Koneksi terputus saat verifikasi KYC", count: discRows.length, rows: toDetailKyc(discRows) });
+
+  const ktpRows = filtered.filter(r => (r.rejection_reason || "").includes("KTP"));
+  if (ktpRows.length > 0) issues.push({ type: "KTP Rusak/Tidak Jelas", description: "Foto KTP tidak terbaca", count: ktpRows.length, rows: toDetailKyc(ktpRows) });
+
+  const connRows = filtered.filter(r => (r.Topic || "").includes("Koneksi"));
+  if (connRows.length > 0) issues.push({ type: "Koneksi Tidak Stabil", description: "Jaringan tidak stabil, video call gagal", count: connRows.length, rows: toDetailKyc(connRows) });
+
+  const dataRows = filtered.filter(r => ["Nama Ibu Kandung Tidak Sesuai", "Tempat Lahir Tidak Sesuai", "Tanggal Lahir Tidak Sesuai"].includes((r.rejection_reason || "").trim()));
+  if (dataRows.length > 0) issues.push({ type: "Data Tidak Sesuai", description: "Data verifikasi tidak cocok dengan KTP", count: dataRows.length, rows: toDetailKyc(dataRows) });
+
   issues.sort((a, b) => b.count - a.count);
 
   return {
