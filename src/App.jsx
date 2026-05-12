@@ -641,6 +641,15 @@ export default function App() {
   const rawCache = useRef({});
 
   const handleFetch = useCallback(async () => {
+    const diffDays = (new Date(dateTo) - new Date(dateFrom)) / (1000 * 60 * 60 * 24);
+    if (diffDays > 90) {
+      setError("Rentang tanggal maksimal 90 hari. Silakan persempit periode yang dipilih.");
+      return;
+    }
+    if (diffDays < 0) {
+      setError("Tanggal akhir tidak boleh sebelum tanggal awal.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -675,13 +684,24 @@ export default function App() {
             <h1 className="hz-text-heading-5" style={{ color: HZ.neutral1000, margin: 0 }}>
               BSIM S+ GE — Weekly Report Dashboard
             </h1>
-            <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "4px 0 0" }}>
-              Auto-fetch dari Google Sheets · Menggantikan PPT manual
-            </p>
           </div>
           <button className="hz-btn hz-btn--secondary hz-btn--sm" onClick={() => setShowConfig(!showConfig)}>
             <span className="hz-btn__label">⚙ Konfigurasi</span>
           </button>
+        </div>
+
+        {/* ── Info Banner ── */}
+        <div style={{
+          display: "flex", alignItems: "flex-start", gap: 10,
+          background: "#EFF6FF", border: `1px solid #BFDBFE`,
+          borderRadius: 10, padding: "12px 16px", marginBottom: 16,
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}>
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div className="hz-text-body-s-regular" style={{ color: "#1E40AF", lineHeight: 1.6 }}>
+            <b>Data bersumber dari Google Sheets BSIM S+ GE</b> yang dikelola oleh Tim SQE. Data ini <b>bukan realtime</b> — diperbarui secara berkala setiap minggu oleh Tim SQE. Jika ada kebutuhan data di luar jadwal, silakan hubungi Tim SQE. Data tersedia mulai dari tahun <b>2026</b> — silakan pilih rentang tanggal lalu klik <b>Ambil dari Google Sheets</b>.
+          </div>
         </div>
 
         {/* ── Config Panel ── */}

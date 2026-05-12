@@ -183,16 +183,25 @@ export function processCallData(rows, dateFrom, dateTo) {
 
   // Feedback
   const fbs = filtered.filter(r => (r.Feedback || "").trim()).map(r => r.Feedback.trim());
-  const audioKw = ["suara", "tidak terdengar", "mute", "mematikan", "mikropon", "tidak ada suara", "ga ada suara", "gada suara"];
-  const putusKw = ["terputus", "putus", "ditutup", "di tutup", "dimatikan", "end call"];
+  const audioKw   = ["suara", "tidak terdengar", "mute", "mematikan", "mikropon", "tidak ada suara", "ga ada suara", "gada suara"];
+  const putusKw   = ["terputus", "putus", "ditutup", "di tutup", "dimatikan", "end call"];
   const connectKw = ["tidak bisa sambung", "tidak bisa digunakan", "susah"];
-  const posKw = ["bagus", "baik", "ramah", "membantu", "puas", "terima kasih", "mantap", "good", "luar biasa", "cepat", "sipp", "terbaik"];
+  const posKw     = ["bagus", "baik", "ramah", "membantu", "puas", "terima kasih", "makasih", "terimakasih",
+                     "mantap", "good", "luar biasa", "cepat", "sipp", "terbaik", "memuaskan", "sangat baik",
+                     "profesional", "helpful", "sangat membantu", "responsif", "ok banget", "oke banget"];
+  const negSvcKw  = ["jelek", "lambat", "tidak becus", "tidak jelas", "kurang", "buruk", "kecewa", "mengecewakan",
+                     "tidak memuaskan", "perlu diperbaiki", "perlu diperbaarui", "lupa kata sandi"];
   const pos = [], negApp = [], negSvc = [];
   fbs.forEach(fb => {
     const l = fb.toLowerCase();
-    if ([...audioKw, ...putusKw, ...connectKw].some(k => l.includes(k))) negApp.push(fb);
-    else if (posKw.some(k => l.includes(k))) pos.push(fb);
-    else if (fb.length > 10) negSvc.push(fb);
+    // Positive check FIRST — takes priority over technical keywords
+    if (posKw.some(k => l.includes(k))) { pos.push(fb); return; }
+    // Then technical/app issues
+    if ([...audioKw, ...putusKw, ...connectKw].some(k => l.includes(k))) { negApp.push(fb); return; }
+    // Explicit negative service keywords
+    if (negSvcKw.some(k => l.includes(k))) { negSvc.push(fb); return; }
+    // Catch-all for remaining longer feedback
+    if (fb.length > 10) negSvc.push(fb);
   });
 
   // Issues
