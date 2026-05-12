@@ -427,6 +427,27 @@ function KYCFunnel({ data }) {
   );
 }
 
+// ── Pagination helpers ────────────────────────────────────────────────────────
+const pgBtnStyle = active => ({
+  width: 32, height: 32, borderRadius: 6, border: `1px solid ${active ? HZ.primary : HZ.neutral300}`,
+  background: active ? HZ.primary : "#FFF", color: active ? "#FFF" : HZ.neutral700,
+  fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", flexShrink: 0,
+});
+
+function buildPageWindow(current, total) {
+  // Always show first, last, current ±2, with ellipsis gaps
+  const show = new Set([0, total - 1, current, current - 1, current - 2, current + 1, current + 2].filter(n => n >= 0 && n < total));
+  const sorted = [...show].sort((a, b) => a - b);
+  const result = [];
+  let prev = -1;
+  for (const n of sorted) {
+    if (prev !== -1 && n - prev > 1) result.push("…");
+    result.push(n);
+    prev = n;
+  }
+  return result;
+}
+
 // ── Repeat Topic Table with Pagination ────────────────────────────────────────
 const PAGE_SIZE = 10;
 function RepeatTopicTable({ items, onSelect }) {
@@ -480,39 +501,39 @@ function RepeatTopicTable({ items, onSelect }) {
       </div>
 
       {totalPages > 1 && (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, flexWrap: "wrap", gap: 8 }}>
           <span className="hz-text-body-s-regular" style={{ color: HZ.neutral500 }}>
             Halaman {page + 1} dari {totalPages} · {items.length} total
           </span>
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            {/* Prev */}
             <button
-              className="hz-btn hz-btn--secondary hz-btn--sm"
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
-            >
-              <span className="hz-btn__label">← Sebelumnya</span>
-            </button>
-            {Array.from({ length: totalPages }, (_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setPage(idx)}
-                style={{
-                  width: 32, height: 32, borderRadius: 6, border: `1px solid ${idx === page ? HZ.primary : HZ.neutral300}`,
-                  background: idx === page ? HZ.primary : "#FFF",
-                  color: idx === page ? "#FFF" : HZ.neutral700,
-                  fontFamily: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer",
-                }}
-              >
-                {idx + 1}
-              </button>
-            ))}
+              style={{ ...pgBtnStyle(false), opacity: page === 0 ? 0.35 : 1 }}
+            >‹</button>
+
+            {/* Page window */}
+            {buildPageWindow(page, totalPages).map((item, i) =>
+              item === "…" ? (
+                <span key={i} style={{ padding: "0 4px", color: HZ.neutral400, lineHeight: "32px" }}>…</span>
+              ) : (
+                <button
+                  key={i}
+                  onClick={() => setPage(item)}
+                  style={pgBtnStyle(item === page)}
+                >
+                  {item + 1}
+                </button>
+              )
+            )}
+
+            {/* Next */}
             <button
-              className="hz-btn hz-btn--secondary hz-btn--sm"
               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
-            >
-              <span className="hz-btn__label">Berikutnya →</span>
-            </button>
+              style={{ ...pgBtnStyle(false), opacity: page === totalPages - 1 ? 0.35 : 1 }}
+            >›</button>
           </div>
         </div>
       )}
