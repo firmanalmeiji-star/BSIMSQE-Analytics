@@ -11,6 +11,16 @@ export async function fetchSheetCSV(sheetId, gid = "0") {
   return data;
 }
 
+// Case-insensitive field lookup to handle header variations in Google Sheets
+function getField(row, ...keys) {
+  for (const k of keys) {
+    if (row[k] !== undefined && row[k] !== "") return row[k];
+    const found = Object.keys(row).find(rk => rk.trim().toLowerCase() === k.toLowerCase());
+    if (found && row[found] !== undefined && row[found] !== "") return row[found];
+  }
+  return "-";
+}
+
 export function processCallData(rows, dateFrom, dateTo) {
   const from = new Date(dateFrom + "T00:00:00Z");
   const to = new Date(dateTo + "T23:59:59Z");
@@ -70,7 +80,7 @@ export function processCallData(rows, dateFrom, dateTo) {
   // Issues
   const toDetail = rows => rows.map(r => ({
     date:            (r.created_at || "").substring(0, 10),
-    conversation_id: r.convo_id || r.conversation_id || r.id || "-",
+    conversation_id: getField(r, 'convo_id', 'conversation_id', 'id'),
     customer_name:   r.cust_name || "-",
     agent_name:      r.agent_name || "-",
   }));
@@ -149,7 +159,7 @@ export function processKYCData(rows, dateFrom, dateTo) {
 
   const toDetailKyc = rows => rows.map(r => ({
     date:            (r.created_at || "").substring(0, 10),
-    conversation_id: r.convo_id || r.conversation_id || r.id || "-",
+    conversation_id: getField(r, 'convo_id', 'conversation_id', 'id'),
     customer_name:   r.cust_name || "-",
     agent_name:      r.agent_name || "-",
   }));
