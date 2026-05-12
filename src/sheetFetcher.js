@@ -80,16 +80,23 @@ export function processCallData(rows, dateFrom, dateTo) {
     .filter(([, v]) => v.guest + v.login > 0)
     .map(([s, v]) => ({ status: s.charAt(0) + s.slice(1).toLowerCase().replace("_queue", "-Queue"), guest: v.guest, login: v.login }));
 
-  // Hourly data — WIB (UTC+7)
+  // Hourly data — WIB (UTC+7), split by guest/login
   const hourMap = {};
-  for (let h = 0; h < 24; h++) hourMap[h] = { hour: String(h).padStart(2, "0") + ":00", resolved: 0, dropped: 0, abandoned: 0, prequeue: 0, total: 0 };
+  for (let h = 0; h < 24; h++) hourMap[h] = {
+    hour: String(h).padStart(2, "0") + ":00",
+    gResolved: 0, gDropped: 0, gAbandoned: 0, gPrequeue: 0,
+    lResolved: 0, lDropped: 0, lAbandoned: 0, lPrequeue: 0,
+    total: 0,
+  };
   filtered.forEach(r => {
     const h = (new Date(r.created_at).getUTCHours() + 7) % 24;
+    const guest = String(r.guest_mode).toUpperCase() === "TRUE";
+    const p = guest ? "g" : "l";
     hourMap[h].total++;
-    if (r.status === "RESOLVED") hourMap[h].resolved++;
-    else if (r.status === "DROPPED") hourMap[h].dropped++;
-    else if (r.status === "ABANDONED") hourMap[h].abandoned++;
-    else if (r.status === "PRE_QUEUE") hourMap[h].prequeue++;
+    if (r.status === "RESOLVED")  hourMap[h][p + "Resolved"]++;
+    else if (r.status === "DROPPED")   hourMap[h][p + "Dropped"]++;
+    else if (r.status === "ABANDONED") hourMap[h][p + "Abandoned"]++;
+    else if (r.status === "PRE_QUEUE") hourMap[h][p + "Prequeue"]++;
   });
   const hourlyData = Object.values(hourMap).filter(h => h.total > 0);
 
