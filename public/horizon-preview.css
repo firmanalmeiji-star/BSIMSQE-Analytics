@@ -1,0 +1,999 @@
+/*
+ * Horizon Design System — Standalone Preview CSS v3
+ * ================================================
+ * This file enables browser-renderable previews of Horizon components
+ * WITHOUT requiring the @squantumengine/horizon npm package or Tailwind.
+ *
+ * Usage: Include this CSS in any HTML preview artifact.
+ * It defines all Horizon tokens as CSS custom properties and provides
+ * base component styles that visually match the production library.
+ *
+ * Icons: Font Awesome Pro 5.15.4 (fal = light, far = regular, fas = solid)
+ * Last synced with: @squantumengine/horizon v1.22.1
+ * Figma source: Horizon Design System (Fondations collection)
+ */
+
+/* ============================================================
+   1. CSS RESET (matches hz-normalize)
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================
+   1b. FONT AWESOME ICON SIZING FOR HORIZON COMPONENTS
+   ============================================================ */
+.hz-btn__icon i { font-size: inherit; line-height: 1; }
+.hz-btn--sm .hz-btn__icon i { font-size: 14px; }
+.hz-btn--md .hz-btn__icon i, .hz-btn--lg .hz-btn__icon i { font-size: 16px; }
+.hz-chip__icon i { font-size: 14px; line-height: 1; }
+.hz-sidebar__item-icon i { font-size: 18px; line-height: 1; width: 20px; text-align: center; }
+.hz-textfield__icon i { font-size: 18px; line-height: 1; }
+.hz-notification i { line-height: 1; }
+.hz-dialog__close i { font-size: 16px; }
+
+/* ============================================================
+   2. FONT
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+:root {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   3. COLOR TOKENS — Primitive (Fondations collection)
+   ============================================================ */
+:root {
+  /* Neutral */
+  --hz-neutral-0: #FFFFFF;
+  --hz-neutral-50: #F8F9FA;
+  --hz-neutral-100: #EFF1F3;
+  --hz-neutral-200: #DEE3E7;
+  --hz-neutral-300: #CED4DA;
+  --hz-neutral-400: #ADB5BD;
+  --hz-neutral-500: #8B949C;
+  --hz-neutral-600: #6C757D;
+  --hz-neutral-700: #495057;
+  --hz-neutral-800: #343A40;
+  --hz-neutral-900: #272D33;
+  --hz-neutral-950: #1E252E;
+  --hz-neutral-1000: #13171C;
+
+  /* Blue */
+  --hz-blue-50: #E6F0FD;
+  --hz-blue-100: #B3D1F9;
+  --hz-blue-200: #80B3F5;
+  --hz-blue-300: #4D94F1;
+  --hz-blue-400: #2680EB;
+  --hz-blue-500: #006CEB;
+  --hz-blue-600: #005BC4;
+  --hz-blue-700: #004A9E;
+  --hz-blue-800: #003A78;
+  --hz-blue-900: #002E5F;
+  --hz-blue-950: #00234D;
+
+  /* Red */
+  --hz-red-50: #FFD9D9;
+  --hz-red-100: #FFB3B3;
+  --hz-red-200: #FF8080;
+  --hz-red-300: #FF4D4D;
+  --hz-red-400: #E63333;
+  --hz-red-500: #D92222;
+  --hz-red-600: #B31B1B;
+  --hz-red-700: #8C1515;
+  --hz-red-800: #660F0F;
+  --hz-red-900: #4D0B0B;
+  --hz-red-950: #330707;
+
+  /* Green */
+  --hz-green-50: #CBF5E6;
+  --hz-green-100: #97EBCD;
+  --hz-green-200: #63E0B4;
+  --hz-green-300: #30D69B;
+  --hz-green-400: #1DBF85;
+  --hz-green-500: #159367;
+  --hz-green-600: #117A55;
+  --hz-green-700: #0D6244;
+  --hz-green-800: #094A33;
+  --hz-green-900: #063122;
+  --hz-green-950: #031911;
+
+  /* Yellow */
+  --hz-yellow-50: #FFFEDE;
+  --hz-yellow-100: #FFF9A8;
+  --hz-yellow-200: #FFF172;
+  --hz-yellow-300: #FFE83C;
+  --hz-yellow-400: #F2D200;
+  --hz-yellow-500: #E5AC00;
+  --hz-yellow-600: #BF8F00;
+  --hz-yellow-700: #997200;
+  --hz-yellow-800: #735600;
+  --hz-yellow-900: #4D3900;
+  --hz-yellow-950: #261D00;
+
+  /* Orange */
+  --hz-orange-50: #FFD9CC;
+  --hz-orange-100: #FFB399;
+  --hz-orange-200: #FF8D66;
+  --hz-orange-300: #FF6733;
+  --hz-orange-400: #F25220;
+  --hz-orange-500: #E45A18;
+  --hz-orange-600: #BF4B14;
+  --hz-orange-700: #993C10;
+  --hz-orange-800: #732D0C;
+  --hz-orange-900: #4D1E08;
+  --hz-orange-950: #260F04;
+
+  /* Purple */
+  --hz-purple-50: #E5D9FF;
+  --hz-purple-100: #CBB3FF;
+  --hz-purple-200: #B18DFF;
+  --hz-purple-300: #9767FF;
+  --hz-purple-400: #8A55F0;
+  --hz-purple-500: #7C48E4;
+  --hz-purple-600: #673CBF;
+  --hz-purple-700: #533099;
+  --hz-purple-800: #3E2473;
+  --hz-purple-900: #29184D;
+  --hz-purple-950: #150C26;
+
+  /* Magenta */
+  --hz-magenta-50: #FFD4F8;
+  --hz-magenta-100: #FFAAF1;
+  --hz-magenta-200: #FF80EB;
+  --hz-magenta-300: #FF55E4;
+  --hz-magenta-400: #F040C4;
+  --hz-magenta-500: #E437AE;
+  --hz-magenta-600: #BF2E92;
+  --hz-magenta-700: #992575;
+  --hz-magenta-800: #731C58;
+  --hz-magenta-900: #4D133B;
+  --hz-magenta-950: #26091D;
+
+  /* Teal */
+  --hz-teal-50: #DBF3FF;
+  --hz-teal-100: #B7E7FF;
+  --hz-teal-200: #8DD9F7;
+  --hz-teal-300: #5EC8EE;
+  --hz-teal-400: #3DB8E8;
+  --hz-teal-500: #2CA7E4;
+  --hz-teal-600: #248BBF;
+  --hz-teal-700: #1D7099;
+  --hz-teal-800: #155473;
+  --hz-teal-900: #0E384D;
+  --hz-teal-950: #071C26;
+}
+
+/* ============================================================
+   4. SEMANTIC THEME TOKENS (blue theme default)
+   ============================================================ */
+:root,
+[data-theme="blue"] {
+  --hz-horizon-primary: var(--hz-blue-500);
+  --hz-horizon-primary-medium: var(--hz-blue-600);
+  --hz-horizon-primary-dark: var(--hz-blue-700);
+  --hz-horizon-primary-light: var(--hz-blue-300);
+  --hz-horizon-primary-soft: var(--hz-blue-100);
+  --hz-horizon-primary-pale: var(--hz-blue-50);
+}
+
+[data-theme="green"] {
+  --hz-horizon-primary: var(--hz-green-500);
+  --hz-horizon-primary-medium: var(--hz-green-600);
+  --hz-horizon-primary-dark: var(--hz-green-700);
+  --hz-horizon-primary-light: var(--hz-green-300);
+  --hz-horizon-primary-soft: var(--hz-green-100);
+  --hz-horizon-primary-pale: var(--hz-green-50);
+}
+
+[data-theme="red"] {
+  --hz-horizon-primary: var(--hz-red-500);
+  --hz-horizon-primary-medium: var(--hz-red-600);
+  --hz-horizon-primary-dark: var(--hz-red-700);
+  --hz-horizon-primary-light: var(--hz-red-300);
+  --hz-horizon-primary-soft: var(--hz-red-100);
+  --hz-horizon-primary-pale: var(--hz-red-50);
+}
+
+[data-theme="purple"] {
+  --hz-horizon-primary: var(--hz-purple-500);
+  --hz-horizon-primary-medium: var(--hz-purple-600);
+  --hz-horizon-primary-dark: var(--hz-purple-700);
+  --hz-horizon-primary-light: var(--hz-purple-300);
+  --hz-horizon-primary-soft: var(--hz-purple-100);
+  --hz-horizon-primary-pale: var(--hz-purple-50);
+}
+
+[data-theme="orange"] {
+  --hz-horizon-primary: var(--hz-orange-500);
+  --hz-horizon-primary-medium: var(--hz-orange-600);
+  --hz-horizon-primary-dark: var(--hz-orange-700);
+  --hz-horizon-primary-light: var(--hz-orange-300);
+  --hz-horizon-primary-soft: var(--hz-orange-100);
+  --hz-horizon-primary-pale: var(--hz-orange-50);
+}
+
+[data-theme="teal"] {
+  --hz-horizon-primary: var(--hz-teal-500);
+  --hz-horizon-primary-medium: var(--hz-teal-600);
+  --hz-horizon-primary-dark: var(--hz-teal-700);
+  --hz-horizon-primary-light: var(--hz-teal-300);
+  --hz-horizon-primary-soft: var(--hz-teal-100);
+  --hz-horizon-primary-pale: var(--hz-teal-50);
+}
+
+[data-theme="magenta"] {
+  --hz-horizon-primary: var(--hz-magenta-500);
+  --hz-horizon-primary-medium: var(--hz-magenta-600);
+  --hz-horizon-primary-dark: var(--hz-magenta-700);
+  --hz-horizon-primary-light: var(--hz-magenta-300);
+  --hz-horizon-primary-soft: var(--hz-magenta-100);
+  --hz-horizon-primary-pale: var(--hz-magenta-50);
+}
+
+[data-theme="yellow"] {
+  --hz-horizon-primary: var(--hz-yellow-500);
+  --hz-horizon-primary-medium: var(--hz-yellow-600);
+  --hz-horizon-primary-dark: var(--hz-yellow-700);
+  --hz-horizon-primary-light: var(--hz-yellow-300);
+  --hz-horizon-primary-soft: var(--hz-yellow-100);
+  --hz-horizon-primary-pale: var(--hz-yellow-50);
+}
+
+[data-theme="neutral"] {
+  --hz-horizon-primary: var(--hz-neutral-700);
+  --hz-horizon-primary-medium: var(--hz-neutral-800);
+  --hz-horizon-primary-dark: var(--hz-neutral-900);
+  --hz-horizon-primary-light: var(--hz-neutral-400);
+  --hz-horizon-primary-soft: var(--hz-neutral-200);
+  --hz-horizon-primary-pale: var(--hz-neutral-50);
+}
+
+/* ============================================================
+   5. SPACING TOKENS
+   ============================================================ */
+:root {
+  --hz-space-px: 1px;
+  --hz-space-0-5: 2px;
+  --hz-space-1: 4px;
+  --hz-space-1-5: 6px;
+  --hz-space-2: 8px;
+  --hz-space-2-5: 10px;
+  --hz-space-3: 12px;
+  --hz-space-4: 16px;
+  --hz-space-5: 20px;
+  --hz-space-6: 24px;
+  --hz-space-8: 32px;
+  --hz-space-10: 40px;
+  --hz-space-12: 48px;
+  --hz-space-16: 64px;
+}
+
+/* ============================================================
+   6. BORDER RADIUS TOKENS
+   ============================================================ */
+:root {
+  --hz-radius-sm: 4px;
+  --hz-radius-default: 6px;
+  --hz-radius-md: 8px;
+  --hz-radius-lg: 12px;
+  --hz-radius-full: 9999px;
+}
+
+/* ============================================================
+   7. TYPOGRAPHY CLASSES
+   ============================================================ */
+.hz-text-heading-1 { font-size: 2.25rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.02em; }
+.hz-text-heading-2 { font-size: 2rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; }
+.hz-text-heading-3 { font-size: 1.75rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; }
+.hz-text-heading-4 { font-size: 1.5rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; }
+.hz-text-heading-5 { font-size: 1.25rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; }
+.hz-text-heading-6 { font-size: 1.125rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; }
+
+.hz-text-body-xl-regular  { font-size: 1.125rem; line-height: 1.5; font-weight: 400; }
+.hz-text-body-xl-semibold { font-size: 1.125rem; line-height: 1.5; font-weight: 600; }
+.hz-text-body-xl-bold     { font-size: 1.125rem; line-height: 1.5; font-weight: 700; }
+
+.hz-text-body-l-regular  { font-size: 1rem; line-height: 1.5; font-weight: 400; }
+.hz-text-body-l-semibold { font-size: 1rem; line-height: 1.5; font-weight: 600; }
+.hz-text-body-l-bold     { font-size: 1rem; line-height: 1.5; font-weight: 700; }
+
+.hz-text-body-r-regular  { font-size: 0.875rem; line-height: 1.5; font-weight: 400; }
+.hz-text-body-r-semibold { font-size: 0.875rem; line-height: 1.5; font-weight: 600; }
+.hz-text-body-r-bold     { font-size: 0.875rem; line-height: 1.5; font-weight: 700; }
+
+.hz-text-body-s-regular  { font-size: 0.75rem; line-height: 1.5; font-weight: 400; }
+.hz-text-body-s-semibold { font-size: 0.75rem; line-height: 1.5; font-weight: 600; }
+.hz-text-body-s-bold     { font-size: 0.75rem; line-height: 1.5; font-weight: 700; }
+
+/* ============================================================
+   8. COMPONENT — Button
+   ============================================================ */
+.hz-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: var(--hz-radius-lg);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  position: relative;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.hz-btn--sm { height: 32px; padding: 0 16px; font-size: 0.875rem; font-weight: 700; }
+.hz-btn--md { height: 40px; padding: 0 16px; font-size: 1rem; font-weight: 700; }
+.hz-btn--lg { height: 48px; padding: 0 24px; font-size: 1rem; font-weight: 700; }
+
+.hz-btn--primary { background-color: var(--hz-horizon-primary); color: var(--hz-neutral-0); }
+.hz-btn--primary:hover { background-color: var(--hz-horizon-primary-medium); }
+.hz-btn--primary:active { background-color: var(--hz-horizon-primary-dark); }
+.hz-btn--primary:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--hz-neutral-0), 0 0 0 4px var(--hz-horizon-primary-light); }
+
+.hz-btn--secondary { background-color: var(--hz-neutral-0); color: var(--hz-horizon-primary); border: 1px solid var(--hz-horizon-primary); }
+.hz-btn--secondary:hover { background-color: var(--hz-horizon-primary-pale); }
+.hz-btn--secondary:active { background-color: var(--hz-horizon-primary-soft); }
+
+.hz-btn--text { background-color: transparent; color: var(--hz-horizon-primary); }
+.hz-btn--text:hover { background-color: var(--hz-horizon-primary-pale); }
+.hz-btn--text:active { background-color: var(--hz-horizon-primary-soft); }
+
+.hz-btn:disabled, .hz-btn--disabled { background-color: var(--hz-neutral-100); color: var(--hz-neutral-400); border-color: transparent; cursor: not-allowed; pointer-events: none; }
+.hz-btn--full { width: 100%; }
+
+/* Button icon (prefix / suffix) */
+.hz-btn__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; flex-shrink: 0;
+}
+.hz-btn__icon svg { width: 20px; height: 20px; }
+.hz-btn--sm .hz-btn__icon { width: 16px; height: 16px; }
+.hz-btn--sm .hz-btn__icon svg { width: 16px; height: 16px; }
+
+/* Loading state */
+.hz-btn--loading { pointer-events: none; position: relative; }
+.hz-btn--loading .hz-btn__label,
+.hz-btn--loading .hz-btn__icon { visibility: hidden; }
+.hz-btn--loading::after {
+  content: ''; position: absolute;
+  width: 20px; height: 20px;
+  border: 2px solid currentColor; border-top-color: transparent;
+  border-radius: 50%;
+  animation: hz-spin 0.6s linear infinite;
+}
+.hz-btn--sm.hz-btn--loading::after { width: 16px; height: 16px; }
+@keyframes hz-spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   9. COMPONENT — TextField (Material Design Outlined / Floating Label)
+   ============================================================ */
+.hz-textfield {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Wrapper is the outlined box — position:relative anchors the label */
+.hz-textfield__wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--hz-neutral-300);
+  border-radius: var(--hz-radius-md);
+  background-color: var(--hz-neutral-0);
+  position: relative;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.hz-textfield__wrapper:hover { border-color: var(--hz-neutral-500); }
+
+/* Focus: primary border + ring */
+.hz-textfield__wrapper:focus-within { border-color: var(--hz-horizon-primary); box-shadow: 0 0 0 1px var(--hz-horizon-primary); }
+
+/* --- Floating label --- */
+.hz-textfield__label {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--hz-neutral-500);
+  background-color: var(--hz-neutral-0);
+  padding: 0 4px;
+  pointer-events: none;
+  transition: top 150ms cubic-bezier(0.4,0,0.2,1),
+              transform 150ms cubic-bezier(0.4,0,0.2,1),
+              font-size 150ms cubic-bezier(0.4,0,0.2,1),
+              color 150ms cubic-bezier(0.4,0,0.2,1);
+  z-index: 1;
+}
+
+/* Label floats up when wrapper has focus OR input has value (via .hz-textfield--filled) */
+.hz-textfield__wrapper:focus-within .hz-textfield__label,
+.hz-textfield--filled .hz-textfield__label {
+  top: 0;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.hz-textfield__wrapper:focus-within .hz-textfield__label {
+  color: var(--hz-horizon-primary);
+}
+.hz-textfield--filled .hz-textfield__label {
+  color: var(--hz-neutral-700);
+}
+/* Focus overrides filled color */
+.hz-textfield--filled .hz-textfield__wrapper:focus-within .hz-textfield__label {
+  color: var(--hz-horizon-primary);
+}
+
+/* When prefix icon is present, offset the resting label past the icon */
+.hz-textfield__wrapper--has-prefix .hz-textfield__label {
+  left: 40px;
+}
+.hz-textfield__wrapper--has-prefix:focus-within .hz-textfield__label,
+.hz-textfield--filled .hz-textfield__wrapper--has-prefix .hz-textfield__label {
+  left: 12px;
+}
+
+/* --- Input --- */
+.hz-textfield__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--hz-neutral-1000);
+  width: 100%;
+  padding: 0;
+}
+/* Hide placeholder when label is resting (not focused, not filled) */
+.hz-textfield__input::placeholder { color: transparent; transition: color 150ms ease; }
+.hz-textfield__wrapper:focus-within .hz-textfield__input::placeholder { color: var(--hz-neutral-400); }
+
+/* --- Helper / Description --- */
+.hz-textfield__description { font-size: 0.75rem; line-height: 1.5; color: var(--hz-neutral-500); margin-top: 2px; padding-left: 12px; }
+
+/* --- Error state --- */
+.hz-textfield--error .hz-textfield__wrapper { border-color: var(--hz-red-500); }
+.hz-textfield--error .hz-textfield__wrapper:focus-within { border-color: var(--hz-red-500); box-shadow: 0 0 0 1px var(--hz-red-500); }
+.hz-textfield--error .hz-textfield__label { color: var(--hz-red-500) !important; }
+.hz-textfield__error-message { font-size: 0.75rem; line-height: 1.5; color: var(--hz-red-500); margin-top: 2px; padding-left: 12px; }
+
+/* --- Disabled state --- */
+.hz-textfield--disabled .hz-textfield__wrapper { background-color: var(--hz-neutral-50); border-color: var(--hz-neutral-200); cursor: not-allowed; }
+.hz-textfield--disabled .hz-textfield__label { background-color: var(--hz-neutral-50); color: var(--hz-neutral-400) !important; }
+.hz-textfield--disabled .hz-textfield__input { color: var(--hz-neutral-400); cursor: not-allowed; }
+
+/* --- Icon (prefix / suffix) --- */
+.hz-textfield__icon { display: flex; align-items: center; color: var(--hz-neutral-500); flex-shrink: 0; }
+
+/* --- Multiline / Textarea --- */
+.hz-textfield__wrapper--multiline { height: auto; min-height: 96px; padding: 14px 12px 8px; align-items: flex-start; }
+.hz-textfield__wrapper--multiline .hz-textfield__label {
+  top: 14px; transform: translateY(0);
+}
+.hz-textfield__wrapper--multiline:focus-within .hz-textfield__label,
+.hz-textfield--filled .hz-textfield__wrapper--multiline .hz-textfield__label {
+  top: 0; transform: translateY(-50%);
+}
+.hz-textfield__textarea {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-family: inherit; font-size: 0.875rem; line-height: 1.5;
+  color: var(--hz-neutral-1000); resize: vertical; min-height: 60px; width: 100%;
+  padding: 0;
+}
+.hz-textfield__textarea::placeholder { color: transparent; transition: color 150ms ease; }
+.hz-textfield__wrapper:focus-within .hz-textfield__textarea::placeholder { color: var(--hz-neutral-400); }
+
+/* ============================================================
+   10. COMPONENT — Select
+   ============================================================ */
+.hz-select { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.hz-select__label { font-size: 0.875rem; font-weight: 600; line-height: 1.5; color: var(--hz-neutral-900); }
+.hz-select__trigger {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 40px; padding: 0 12px;
+  border: 1px solid var(--hz-neutral-300); border-radius: var(--hz-radius-md);
+  background-color: var(--hz-neutral-0); cursor: pointer;
+  font-family: inherit; font-size: 0.875rem; color: var(--hz-neutral-1000);
+  transition: border-color 150ms ease;
+}
+.hz-select__trigger:hover { border-color: var(--hz-neutral-500); }
+.hz-select__trigger--placeholder { color: var(--hz-neutral-400); }
+.hz-select__chevron { width: 20px; height: 20px; color: var(--hz-neutral-500); flex-shrink: 0; }
+.hz-select__dropdown {
+  border: 1px solid var(--hz-neutral-200); border-radius: var(--hz-radius-md);
+  background: var(--hz-neutral-0); box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  padding: 4px 0; margin-top: 4px;
+}
+.hz-select__option { padding: 8px 12px; font-size: 0.875rem; color: var(--hz-neutral-1000); cursor: pointer; }
+.hz-select__option:hover { background-color: var(--hz-neutral-50); }
+.hz-select__option--selected { color: var(--hz-horizon-primary); font-weight: 600; background-color: var(--hz-horizon-primary-pale); }
+
+/* Multi-select with checkboxes */
+.hz-select__option--checkbox {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  font-size: 0.875rem; color: var(--hz-neutral-1000); cursor: pointer;
+}
+.hz-select__option--checkbox:hover { background-color: var(--hz-neutral-50); }
+.hz-select__checkbox {
+  width: 18px; height: 18px; border: 2px solid var(--hz-neutral-300); border-radius: var(--hz-radius-sm);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--hz-neutral-0); transition: all 0.15s ease;
+}
+.hz-select__checkbox--checked {
+  background: var(--hz-horizon-primary); border-color: var(--hz-horizon-primary);
+}
+.hz-select__checkbox--checked svg { color: var(--hz-neutral-0); }
+.hz-select__tags { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-width: 0; }
+.hz-select__tag {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+  font-size: 0.75rem; font-weight: 500; background: var(--hz-neutral-100);
+  border-radius: var(--hz-radius-full); color: var(--hz-neutral-800);
+}
+.hz-select__tag-remove {
+  width: 14px; height: 14px; color: var(--hz-neutral-500); cursor: pointer; flex-shrink: 0;
+}
+.hz-select__tag-remove:hover { color: var(--hz-neutral-800); }
+
+/* ============================================================
+   11. COMPONENT — Table
+   ============================================================ */
+.hz-table-container { width: 100%; overflow-x: auto; border: 1px solid var(--hz-neutral-200); border-radius: var(--hz-radius-md); }
+.hz-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.hz-table thead { position: sticky; top: 0; z-index: 1; }
+.hz-table th {
+  padding: 12px 16px; text-align: left; font-weight: 600; font-size: 0.75rem;
+  color: var(--hz-neutral-600); background-color: var(--hz-neutral-50);
+  border-bottom: 1px solid var(--hz-neutral-200); white-space: nowrap;
+  line-height: 1.5; letter-spacing: 0.02em; text-transform: uppercase;
+}
+.hz-table th.align-right { text-align: right; }
+.hz-table th.align-center { text-align: center; }
+.hz-table th.sortable { cursor: pointer; user-select: none; }
+.hz-table th.sortable:hover { background-color: var(--hz-neutral-100); }
+.hz-table__sort-icon { display: inline-flex; margin-left: 4px; color: var(--hz-neutral-400); vertical-align: middle; }
+
+.hz-table td {
+  padding: 12px 16px; color: var(--hz-neutral-900);
+  border-bottom: 1px solid var(--hz-neutral-100); line-height: 1.5; vertical-align: middle;
+}
+.hz-table td.align-right { text-align: right; }
+.hz-table td.align-center { text-align: center; }
+.hz-table tbody tr:hover { background-color: var(--hz-neutral-50); }
+.hz-table tbody tr:last-child td { border-bottom: none; }
+.hz-table tbody tr.selected { background-color: var(--hz-horizon-primary-pale); }
+.hz-table tbody tr.selected:hover { background-color: var(--hz-horizon-primary-soft); }
+.hz-table--loading { opacity: 0.5; pointer-events: none; }
+.hz-table__empty { text-align: center; padding: 48px 16px; color: var(--hz-neutral-500); }
+
+/* ============================================================
+   12. COMPONENT — Pagination
+   ============================================================ */
+.hz-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; font-size: 0.875rem; color: var(--hz-neutral-600);
+  border-top: 1px solid var(--hz-neutral-200);
+}
+.hz-pagination__info { font-size: 0.75rem; color: var(--hz-neutral-500); }
+.hz-pagination__controls { display: flex; align-items: center; gap: 4px; }
+.hz-pagination__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: 1px solid var(--hz-neutral-200);
+  border-radius: var(--hz-radius-md); background: var(--hz-neutral-0);
+  cursor: pointer; font-size: 0.875rem; color: var(--hz-neutral-700); transition: all 150ms ease;
+}
+.hz-pagination__btn:hover { background-color: var(--hz-neutral-50); border-color: var(--hz-neutral-300); }
+.hz-pagination__btn--active { background-color: var(--hz-horizon-primary); color: var(--hz-neutral-0); border-color: var(--hz-horizon-primary); }
+.hz-pagination__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ============================================================
+   13. COMPONENT — Chip
+   ============================================================ */
+.hz-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: var(--hz-radius-full);
+  font-size: 0.875rem; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--hz-neutral-300); background: var(--hz-neutral-0);
+  color: var(--hz-neutral-700); transition: all 150ms ease;
+  height: 32px; white-space: nowrap;
+}
+.hz-chip:hover { background: var(--hz-neutral-50); }
+.hz-chip--active {
+  background: var(--hz-horizon-primary); color: var(--hz-neutral-0);
+  border-color: var(--hz-horizon-primary);
+}
+.hz-chip--active:hover { background: var(--hz-horizon-primary-medium); }
+.hz-chip--active .hz-chip__icon { color: var(--hz-neutral-0); }
+.hz-chip--active .hz-chip__badge { background: var(--hz-neutral-0); color: var(--hz-horizon-primary); }
+
+.hz-chip--disabled {
+  background: var(--hz-neutral-50); color: var(--hz-neutral-400);
+  border-color: var(--hz-neutral-200); cursor: not-allowed; pointer-events: none;
+}
+.hz-chip--disabled .hz-chip__icon { color: var(--hz-neutral-300); }
+.hz-chip--disabled .hz-chip__badge { background: var(--hz-neutral-300); color: var(--hz-neutral-0); }
+
+.hz-chip--lg { height: 36px; padding: 6px 16px; }
+
+/* Chip icon (prefix / suffix) */
+.hz-chip__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; color: var(--hz-neutral-500); flex-shrink: 0;
+}
+.hz-chip__icon svg { width: 16px; height: 16px; }
+
+/* Chip notification badge */
+.hz-chip__badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 5px; height: 18px; min-width: 18px;
+  border-radius: var(--hz-radius-full);
+  font-size: 0.625rem; font-weight: 700; line-height: 1;
+  background: var(--hz-red-500); color: var(--hz-neutral-0);
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   14. COMPONENT — Dialog
+   ============================================================ */
+.hz-dialog-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center; z-index: 50;
+}
+.hz-dialog {
+  background: var(--hz-neutral-0); border-radius: var(--hz-radius-lg);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12); max-width: 480px; width: 100%;
+  max-height: 90vh; display: flex; flex-direction: column;
+}
+.hz-dialog__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; border-bottom: 1px solid var(--hz-neutral-100);
+}
+.hz-dialog__title { font-size: 1.125rem; font-weight: 700; color: var(--hz-neutral-1000); }
+.hz-dialog__close {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--hz-neutral-500); border-radius: var(--hz-radius-default);
+}
+.hz-dialog__close:hover { background: var(--hz-neutral-50); }
+.hz-dialog__body { padding: 24px; overflow-y: auto; flex: 1; font-size: 0.875rem; color: var(--hz-neutral-700); line-height: 1.5; }
+.hz-dialog__footer {
+  display: flex; align-items: center; justify-content: flex-end; gap: 12px;
+  padding: 16px 24px; border-top: 1px solid var(--hz-neutral-100);
+}
+
+/* ============================================================
+   15. COMPONENT — Notification
+   ============================================================ */
+.hz-notification { display: flex; gap: 12px; padding: 12px 16px; border-radius: var(--hz-radius-md); font-size: 0.875rem; line-height: 1.5; }
+.hz-notification--info { background: var(--hz-blue-50); color: var(--hz-blue-700); border: 1px solid var(--hz-blue-200); }
+.hz-notification--success { background: var(--hz-green-50); color: var(--hz-green-700); border: 1px solid var(--hz-green-200); }
+.hz-notification--warning { background: var(--hz-yellow-50); color: var(--hz-yellow-700); border: 1px solid var(--hz-yellow-200); }
+.hz-notification--error { background: var(--hz-red-50); color: var(--hz-red-700); border: 1px solid var(--hz-red-200); }
+
+/* ============================================================
+   16. COMPONENT — Checkbox & Radio
+   ============================================================ */
+.hz-checkbox, .hz-radio { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.875rem; color: var(--hz-neutral-900); }
+.hz-checkbox__box {
+  width: 18px; height: 18px; border: 2px solid var(--hz-neutral-300); border-radius: var(--hz-radius-sm);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 150ms ease;
+}
+.hz-checkbox__box--checked { background: var(--hz-horizon-primary); border-color: var(--hz-horizon-primary); color: var(--hz-neutral-0); }
+.hz-radio__circle {
+  width: 18px; height: 18px; border: 2px solid var(--hz-neutral-300); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 150ms ease;
+}
+.hz-radio__circle--checked { border-color: var(--hz-horizon-primary); }
+.hz-radio__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--hz-horizon-primary); }
+
+/* ============================================================
+   17. COMPONENT — Switch
+   ============================================================ */
+.hz-switch { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.hz-switch__track {
+  width: 44px; height: 24px; border-radius: 12px; background: var(--hz-neutral-300);
+  position: relative; transition: background 150ms ease;
+}
+.hz-switch__track--active { background: var(--hz-horizon-primary); }
+.hz-switch__thumb {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--hz-neutral-0);
+  position: absolute; top: 2px; left: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15); transition: transform 150ms ease;
+}
+.hz-switch__track--active .hz-switch__thumb { transform: translateX(20px); }
+.hz-switch__label { font-size: 0.875rem; color: var(--hz-neutral-900); }
+
+/* ============================================================
+   18. COMPONENT — Tabs
+   ============================================================ */
+.hz-tabs { display: flex; border-bottom: 1px solid var(--hz-neutral-200); gap: 0; }
+.hz-tabs__tab {
+  padding: 12px 16px; font-size: 0.875rem; font-weight: 600;
+  color: var(--hz-neutral-500); border-bottom: 2px solid transparent;
+  cursor: pointer; background: transparent;
+  border-top: none; border-left: none; border-right: none;
+  font-family: inherit; transition: color 150ms ease, border-color 150ms ease;
+}
+.hz-tabs__tab:hover { color: var(--hz-neutral-700); }
+.hz-tabs__tab--active { color: var(--hz-horizon-primary); border-bottom-color: var(--hz-horizon-primary); }
+
+/* ============================================================
+   19. COMPONENT — Card
+   ============================================================ */
+.hz-card { background: var(--hz-neutral-0); border: 1px solid var(--hz-neutral-200); border-radius: var(--hz-radius-lg); padding: 24px; }
+.hz-card--shadow { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+/* ============================================================
+   20. COMPONENT — Skeleton
+   ============================================================ */
+.hz-skeleton {
+  background: linear-gradient(90deg, var(--hz-neutral-100) 25%, var(--hz-neutral-50) 50%, var(--hz-neutral-100) 75%);
+  background-size: 200% 100%; animation: hz-shimmer 1.5s infinite; border-radius: var(--hz-radius-sm);
+}
+@keyframes hz-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ============================================================
+   21. COMPONENT — Steps (Horizontal)
+   ============================================================ */
+.hz-steps { display: flex; align-items: flex-start; width: 100%; }
+.hz-steps__step {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  flex-shrink: 0; position: relative;
+}
+.hz-steps__circle {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+  border: 2px solid var(--hz-neutral-200); background: var(--hz-neutral-0);
+  color: var(--hz-neutral-400); transition: all 150ms ease;
+}
+/* Active: outlined ring with primary border */
+.hz-steps__circle--active {
+  border-color: var(--hz-horizon-primary); background: var(--hz-neutral-0);
+  color: var(--hz-horizon-primary);
+}
+/* Completed: filled primary with checkmark */
+.hz-steps__circle--completed {
+  border-color: var(--hz-horizon-primary); background: var(--hz-horizon-primary);
+  color: var(--hz-neutral-0);
+}
+/* Pending: light gray outline */
+.hz-steps__circle--pending {
+  border-color: var(--hz-neutral-200); background: var(--hz-neutral-0);
+  color: var(--hz-neutral-400);
+}
+/* Disabled: gray with muted appearance */
+.hz-steps__circle--disabled {
+  border-color: var(--hz-neutral-200); background: var(--hz-neutral-50);
+  color: var(--hz-neutral-300);
+}
+
+.hz-steps__label {
+  font-size: 0.75rem; font-weight: 600; color: var(--hz-neutral-700);
+  text-align: center; white-space: nowrap;
+}
+.hz-steps__step--active .hz-steps__label { color: var(--hz-horizon-primary); font-weight: 700; }
+.hz-steps__step--completed .hz-steps__label { color: var(--hz-neutral-700); }
+.hz-steps__step--pending .hz-steps__label { color: var(--hz-neutral-400); }
+.hz-steps__step--disabled .hz-steps__label { color: var(--hz-neutral-300); }
+
+/* Horizontal connector — centered with circle (14px = half of 28px circle) */
+.hz-steps__connector {
+  flex: 1; height: 2px; background: var(--hz-neutral-200);
+  min-width: 24px; margin-top: 13px; /* vertically center with 28px circle */
+}
+.hz-steps__connector--completed { background: var(--hz-horizon-primary); }
+.hz-steps__connector--active { background: var(--hz-horizon-primary); }
+
+/* ============================================================
+   21b. COMPONENT — Steps (Vertical)
+   ============================================================ */
+.hz-steps--vertical {
+  flex-direction: column; align-items: flex-start; gap: 12px; width: 100%;
+}
+.hz-steps--vertical .hz-steps__step {
+  flex-direction: row; align-items: flex-start; gap: 12px;
+  width: 100%; position: relative;
+}
+.hz-steps--vertical .hz-steps__label { display: none; } /* label is inside card instead */
+
+/* Vertical connector: removed — gap between steps is sufficient */
+.hz-steps--vertical .hz-steps__connector {
+  display: none;
+}
+
+/* Step card for vertical layout */
+.hz-steps__card {
+  flex: 1; background: var(--hz-neutral-0); border: 1px solid var(--hz-neutral-200);
+  border-radius: var(--hz-radius-md); padding: 12px 16px;
+}
+.hz-steps__card-title {
+  font-size: 0.875rem; font-weight: 600; color: var(--hz-neutral-900); line-height: 1.4;
+}
+.hz-steps__card-subtitle {
+  font-size: 0.75rem; font-weight: 400; color: var(--hz-neutral-500); line-height: 1.4; margin-top: 2px;
+}
+/* Muted card for pending/disabled */
+.hz-steps__step--pending .hz-steps__card,
+.hz-steps__step--disabled .hz-steps__card {
+  background: var(--hz-neutral-50); border-color: var(--hz-neutral-100);
+}
+.hz-steps__step--pending .hz-steps__card-title,
+.hz-steps__step--disabled .hz-steps__card-title { color: var(--hz-neutral-400); }
+.hz-steps__step--pending .hz-steps__card-subtitle,
+.hz-steps__step--disabled .hz-steps__card-subtitle { color: var(--hz-neutral-300); }
+
+/* ============================================================
+   22. UTILITY — Badges
+   ============================================================ */
+.hz-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: var(--hz-radius-full);
+  font-size: 0.75rem; font-weight: 600; line-height: 1.5;
+}
+.hz-badge--success { background: var(--hz-green-50); color: var(--hz-green-700); }
+.hz-badge--warning { background: var(--hz-yellow-50); color: var(--hz-yellow-700); }
+.hz-badge--error { background: var(--hz-red-50); color: var(--hz-red-700); }
+.hz-badge--info { background: var(--hz-blue-50); color: var(--hz-blue-700); }
+.hz-badge--neutral { background: var(--hz-neutral-100); color: var(--hz-neutral-600); }
+
+/* ============================================================
+   23. COMPONENT — Divider
+   ============================================================ */
+.hz-divider { width: 100%; height: 1px; background: var(--hz-neutral-200); border: none; }
+
+/* ============================================================
+   24. COMPONENT — Sidebar
+   ============================================================ */
+.hz-sidebar {
+  display: flex; flex-direction: column;
+  width: 256px; height: 100%; min-height: 0;
+  background: var(--hz-neutral-0);
+  border-right: 1px solid var(--hz-neutral-200);
+  transition: width 200ms cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+.hz-sidebar--collapsed { width: 64px; }
+
+/* Header: logo + collapse toggle */
+.hz-sidebar__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px; height: 56px; flex-shrink: 0;
+}
+.hz-sidebar__logo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 1rem; font-weight: 700; color: var(--hz-neutral-1000);
+  white-space: nowrap; overflow: hidden;
+}
+.hz-sidebar__logo-icon { width: 28px; height: 28px; flex-shrink: 0; }
+.hz-sidebar__toggle {
+  width: 28px; height: 28px; border-radius: var(--hz-radius-default);
+  border: none; background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--hz-neutral-500); flex-shrink: 0;
+  transition: background 150ms ease;
+}
+.hz-sidebar__toggle:hover { background: var(--hz-neutral-50); }
+.hz-sidebar--collapsed .hz-sidebar__header { justify-content: center; padding: 16px 0; }
+.hz-sidebar--collapsed .hz-sidebar__logo span { display: none; }
+
+/* User section */
+.hz-sidebar__user {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; margin: 0 8px 8px;
+  border-radius: var(--hz-radius-md);
+}
+.hz-sidebar__avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--hz-horizon-primary-soft);
+  color: var(--hz-horizon-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+}
+.hz-sidebar__user-info { overflow: hidden; white-space: nowrap; }
+.hz-sidebar__user-name { font-size: 0.875rem; font-weight: 600; color: var(--hz-neutral-900); }
+.hz-sidebar__user-role { font-size: 0.75rem; color: var(--hz-neutral-500); }
+.hz-sidebar--collapsed .hz-sidebar__user { justify-content: center; padding: 12px 0; margin: 0 0 8px; }
+.hz-sidebar--collapsed .hz-sidebar__user-info { display: none; }
+
+/* Nav section */
+.hz-sidebar__nav {
+  flex: 1; overflow-y: auto; padding: 0 8px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+
+/* Nav item */
+.hz-sidebar__item {
+  display: flex; align-items: center; gap: 12px;
+  height: 40px; padding: 0 12px;
+  border-radius: var(--hz-radius-md);
+  font-size: 0.875rem; font-weight: 500; color: var(--hz-neutral-700);
+  cursor: pointer; white-space: nowrap; overflow: hidden;
+  transition: background 150ms ease, color 150ms ease;
+  text-decoration: none; border: none; background: transparent;
+  font-family: inherit; width: 100%; text-align: left;
+  position: relative;
+}
+.hz-sidebar__item:hover { background: var(--hz-neutral-50); }
+
+/* Active item: left border indicator + primary bg */
+.hz-sidebar__item--active {
+  background: var(--hz-horizon-primary-pale);
+  color: var(--hz-horizon-primary);
+  font-weight: 600;
+}
+.hz-sidebar__item--active::before {
+  content: ''; position: absolute; left: -8px; top: 4px; bottom: 4px;
+  width: 3px; border-radius: 0 2px 2px 0;
+  background: var(--hz-horizon-primary);
+}
+.hz-sidebar__item--active:hover { background: var(--hz-horizon-primary-soft); }
+
+.hz-sidebar__item-icon {
+  width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: inherit;
+}
+.hz-sidebar__item-icon svg { width: 20px; height: 20px; }
+.hz-sidebar__item-label { overflow: hidden; text-overflow: ellipsis; }
+.hz-sidebar--collapsed .hz-sidebar__item { justify-content: center; padding: 0; }
+.hz-sidebar--collapsed .hz-sidebar__item-label { display: none; }
+.hz-sidebar--collapsed .hz-sidebar__item--active::before { left: 0; }
+
+/* Submenu */
+.hz-sidebar__submenu {
+  display: flex; flex-direction: column; gap: 0;
+  padding-left: 44px; /* icon width + gap + padding */
+}
+.hz-sidebar__subitem {
+  display: flex; align-items: center;
+  height: 36px; padding: 0 12px;
+  border-radius: var(--hz-radius-md);
+  font-size: 0.8125rem; font-weight: 400; color: var(--hz-neutral-600);
+  cursor: pointer; white-space: nowrap; overflow: hidden;
+  transition: background 150ms ease, color 150ms ease;
+  text-decoration: none;
+}
+.hz-sidebar__subitem:hover { background: var(--hz-neutral-50); }
+.hz-sidebar__subitem--active {
+  background: var(--hz-horizon-primary-pale);
+  color: var(--hz-horizon-primary); font-weight: 600;
+}
+.hz-sidebar--collapsed .hz-sidebar__submenu { display: none; }
+
+/* Footer (pinned bottom items) */
+.hz-sidebar__footer {
+  flex-shrink: 0; padding: 8px;
+  border-top: 1px solid var(--hz-neutral-100);
+  display: flex; flex-direction: column; gap: 2px;
+}
+
+/* ============================================================
+   25. LAYOUT UTILITIES (for preview HTML)
+   ============================================================ */
+.hz-preview-body { padding: 24px; background: var(--hz-neutral-50); min-height: 100vh; }
+.hz-preview-section { background: var(--hz-neutral-0); border-radius: var(--hz-radius-lg); padding: 24px; margin-bottom: 24px; border: 1px solid var(--hz-neutral-200); }
+.hz-preview-title { font-size: 0.75rem; font-weight: 700; color: var(--hz-neutral-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+.hz-flex { display: flex; }
+.hz-flex-col { flex-direction: column; }
+.hz-items-center { align-items: center; }
+.hz-justify-between { justify-content: space-between; }
+.hz-gap-2 { gap: 8px; }
+.hz-gap-3 { gap: 12px; }
+.hz-gap-4 { gap: 16px; }
+.hz-gap-6 { gap: 24px; }
+.hz-w-full { width: 100%; }
