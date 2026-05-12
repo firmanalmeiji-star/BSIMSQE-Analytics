@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer, ComposedChart, Line } from "recharts";
 import { fetchSheetCSV, processCallData, processKYCData } from "./sheetFetcher";
 
 // Horizon Design System color tokens
@@ -83,6 +83,34 @@ const Tip = ({ active, payload, label }) => {
           {p.name}: <b>{(p.value || 0).toLocaleString()}</b>
         </div>
       ))}
+    </div>
+  );
+};
+
+// ── Performance Chart Tooltip ─────────────────────────────────────────────────
+const PerfTip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  const get = name => payload.find(p => p.name === name)?.value ?? "-";
+  return (
+    <div style={{ background: "#FFF", border: `1px solid ${HZ.neutral200}`, borderRadius: 8, padding: "10px 14px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", minWidth: 200 }}>
+      <div className="hz-text-body-s-bold" style={{ color: HZ.neutral900, marginBottom: 6 }}>{label}</div>
+      <div style={{ display: "flex", gap: 16 }}>
+        <div>
+          {[["Unique users", HZ.green], ["Guest", "#A8C8F0"], ["Total calls", "#C8A800"]].map(([n, c]) => (
+            <div key={n} className="hz-text-body-s-regular" style={{ color: HZ.neutral600, lineHeight: 1.7 }}>
+              <span style={{ color: c }}>■</span> {n}: <b>{get(n)}</b>
+            </div>
+          ))}
+        </div>
+        <div style={{ width: 1, background: HZ.neutral200 }} />
+        <div>
+          {[["Resolved rate", HZ.green], ["Drop+Abandon rate", HZ.orange]].map(([n, c]) => (
+            <div key={n} className="hz-text-body-s-regular" style={{ color: HZ.neutral600, lineHeight: 1.7 }}>
+              <span style={{ color: c }}>—</span> {n}: <b>{get(n)}%</b>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
@@ -750,6 +778,29 @@ export default function App() {
               <SatisfactionStat score={data.satisfactionScore} count={data.satisfactionCount} dist={data.satisfactionDist} />
             </div>
           </Section>
+
+          {/* In-App Performance Chart */}
+          {data.dailyCalls?.length > 0 && (
+            <div className="hz-card" style={{ marginBottom: 20 }}>
+              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 4px", color: HZ.neutral900 }}>In-App Performance</h3>
+              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Volume harian + Resolved Rate vs Drop+Abandon Rate</p>
+              <ResponsiveContainer width="100%" height={300}>
+                <ComposedChart data={data.dailyCalls} margin={{ top: 16, right: 48, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={HZ.neutral200} />
+                  <XAxis dataKey="date" tick={{ fill: HZ.neutral500, fontSize: 10 }} />
+                  <YAxis yAxisId="left" tick={{ fill: HZ.neutral500, fontSize: 10 }} />
+                  <YAxis yAxisId="right" orientation="right" unit="%" domain={[0, 100]} tick={{ fill: HZ.neutral500, fontSize: 10 }} />
+                  <Tooltip content={<PerfTip />} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Bar yAxisId="left" dataKey="uniqueUsers" name="Unique users" fill={HZ.green}   stackId={undefined} />
+                  <Bar yAxisId="left" dataKey="guest"       name="Guest"        fill="#A8C8F0"    stackId={undefined} />
+                  <Bar yAxisId="left" dataKey="total"       name="Total calls"  fill="#F5E6A0"    stackId={undefined} />
+                  <Line yAxisId="right" type="monotone" dataKey="resolvedRate"    name="Resolved rate"     stroke={HZ.green}  strokeWidth={2} dot={{ r: 3 }} label={{ position: "top", fontSize: 9, fill: HZ.green,  formatter: v => v + "%" }} />
+                  <Line yAxisId="right" type="monotone" dataKey="dropAbandonRate" name="Drop+Abandon rate"  stroke={HZ.orange} strokeWidth={2} dot={{ r: 3 }} label={{ position: "top", fontSize: 9, fill: HZ.orange, formatter: v => v + "%" }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          )}
 
           {/* Row 1 — Daily Volume + Status Pie */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>

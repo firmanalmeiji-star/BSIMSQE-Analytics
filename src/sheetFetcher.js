@@ -159,11 +159,27 @@ export function processCallData(rows, dateFrom, dateTo) {
   filtered.forEach(r => {
     const d = (r.created_at || "").substring(0, 10);
     if (!d) return;
-    if (!dailyMap[d]) dailyMap[d] = { total: 0, guest: 0, nonGuest: 0 };
+    if (!dailyMap[d]) dailyMap[d] = { total: 0, guest: 0, nonGuest: 0, resolved: 0, dropped: 0, abandoned: 0, uniqUsers: new Set() };
     dailyMap[d].total++;
     if (String(r.guest_mode).toUpperCase() === "TRUE") dailyMap[d].guest++; else dailyMap[d].nonGuest++;
+    if (r.status === "RESOLVED")  dailyMap[d].resolved++;
+    if (r.status === "DROPPED")   dailyMap[d].dropped++;
+    if (r.status === "ABANDONED") dailyMap[d].abandoned++;
+    const name = (r.cust_name || "").trim();
+    if (name && name.toLowerCase() !== "guest") dailyMap[d].uniqUsers.add(name);
   });
-  const dailyCalls = Object.entries(dailyMap).sort().map(([d, v]) => ({ date: d.substring(5), ...v }));
+  const dailyCalls = Object.entries(dailyMap).sort().map(([d, v]) => ({
+    date: d.substring(5),
+    total: v.total,
+    guest: v.guest,
+    nonGuest: v.nonGuest,
+    uniqueUsers: v.uniqUsers.size,
+    resolved: v.resolved,
+    dropped: v.dropped,
+    abandoned: v.abandoned,
+    resolvedRate:     v.total > 0 ? +(v.resolved / v.total * 100).toFixed(2) : 0,
+    dropAbandonRate:  v.total > 0 ? +((v.dropped + v.abandoned) / v.total * 100).toFixed(2) : 0,
+  }));
 
   // Feedback
   const fbs = filtered.filter(r => (r.Feedback || "").trim()).map(r => r.Feedback.trim());
