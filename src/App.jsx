@@ -124,6 +124,27 @@ function IssueModal({ issue, onClose }) {
             <div style={{ padding: "32px", textAlign: "center" }}>
               <p className="hz-text-body-r-regular" style={{ color: HZ.neutral500 }}>Tidak ada detail data tersedia.</p>
             </div>
+          ) : issue.isAgent ? (
+            <table className="hz-table" style={{ minWidth: "100%" }}>
+              <thead>
+                <tr>
+                  <th style={{ minWidth: 100 }}>Tanggal</th>
+                  <th style={{ minWidth: 320 }}>Conversation ID</th>
+                  <th style={{ minWidth: 140 }}>Nama Nasabah</th>
+                  <th style={{ minWidth: 90 }}>Durasi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {issue.rows.map((row, i) => (
+                  <tr key={i}>
+                    <td>{row.date || "-"}</td>
+                    <td style={{ fontFamily: "monospace", fontSize: 13, whiteSpace: "pre" }}>{row.conversation_id}</td>
+                    <td>{row.customer_name}</td>
+                    <td style={{ fontFamily: "monospace" }}>{row.duration}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <table className="hz-table" style={{ minWidth: "100%" }}>
               <thead>
@@ -557,9 +578,6 @@ export default function App() {
                 <div className="hz-text-heading-3" style={{ color: HZ.red, fontFamily: "'JetBrains Mono', monospace" }}>
                   {data.audioIssues?.audioPct}%
                 </div>
-                <div className="hz-text-body-s-regular" style={{ color: HZ.neutral500 }}>
-                  dari total panggilan ({data.audioIssues?.audioTotal?.toLocaleString()} kasus)
-                </div>
               </div>
               {/* Guest vs Login breakdown */}
               <div style={{ display: "flex", gap: 8 }}>
@@ -614,33 +632,43 @@ export default function App() {
           {data.agentRanking?.length > 0 && (
             <div className="hz-card" style={{ marginBottom: 20 }}>
               <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 4px", color: HZ.neutral900 }}>Ranking Agent</h3>
-              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Diurutkan berdasarkan total panggilan yang ditangani</p>
+              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Klik baris untuk lihat detail percakapan agent</p>
               <div className="hz-table-container">
                 <table className="hz-table">
                   <thead>
                     <tr>
-                      <th style={{ width: 40 }}>#</th>
+                      <th style={{ width: 36 }}>#</th>
                       <th>Nama Agent</th>
                       <th className="align-right">Total</th>
-                      <th className="align-right">Tamu</th>
-                      <th className="align-right">Login</th>
-                      <th className="align-right">% dari Total Call</th>
+                      <th className="align-right">Resolved</th>
+                      <th className="align-right">Dropped</th>
+                      <th className="align-right">Abandoned</th>
+                      <th className="align-right">Rata-rata Durasi</th>
+                      <th className="align-right">% Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.agentRanking.map((a, i) => (
-                      <tr key={i}>
+                      <tr
+                        key={i}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => setSelectedIssue({ type: a.agent, description: `${a.total} panggilan — Resolved: ${a.resolved} · Dropped: ${a.dropped} · Abandoned: ${a.abandoned}`, count: a.total, rows: a.rows, isAgent: true })}
+                        onMouseEnter={e => e.currentTarget.style.background = "#F0F6FF"}
+                        onMouseLeave={e => e.currentTarget.style.background = ""}
+                      >
                         <td className="hz-text-body-s-bold" style={{ color: HZ.neutral400 }}>{i + 1}</td>
                         <td className="hz-text-body-r-semibold" style={{ color: HZ.neutral900 }}>{a.agent}</td>
                         <td className="align-right hz-text-body-r-bold" style={{ color: HZ.primary, fontFamily: "monospace" }}>{a.total.toLocaleString()}</td>
-                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.orange }}>{a.guest.toLocaleString()}</td>
-                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.green }}>{a.login.toLocaleString()}</td>
+                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.green }}>{a.resolved.toLocaleString()}</td>
+                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.red }}>{a.dropped.toLocaleString()}</td>
+                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.yellow }}>{a.abandoned.toLocaleString()}</td>
+                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.neutral700, fontFamily: "monospace" }}>{a.avgDur}</td>
                         <td className="align-right">
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-                            <div style={{ width: 60, height: 6, borderRadius: 3, background: HZ.neutral100, overflow: "hidden" }}>
+                            <div style={{ width: 50, height: 6, borderRadius: 3, background: HZ.neutral100, overflow: "hidden" }}>
                               <div style={{ width: `${Math.min(100, a.pct)}%`, height: "100%", background: HZ.primary, borderRadius: 3 }} />
                             </div>
-                            <span className="hz-text-body-s-bold" style={{ color: HZ.neutral700, minWidth: 40, textAlign: "right" }}>{a.pct}%</span>
+                            <span className="hz-text-body-s-bold" style={{ color: HZ.neutral700, minWidth: 36, textAlign: "right" }}>{a.pct}%</span>
                           </div>
                         </td>
                       </tr>

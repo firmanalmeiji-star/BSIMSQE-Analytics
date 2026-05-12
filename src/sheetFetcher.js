@@ -108,12 +108,37 @@ export function processCallData(rows, dateFrom, dateTo) {
   filtered.forEach(r => {
     const agent = (r.agent_name || "").trim();
     if (!agent || agent === "-") return;
-    if (!agentMap[agent]) agentMap[agent] = { total: 0, guest: 0, login: 0 };
+    if (!agentMap[agent]) agentMap[agent] = { total: 0, guest: 0, login: 0, resolved: 0, dropped: 0, abandoned: 0, durSecs: [], rows: [] };
     agentMap[agent].total++;
     if (String(r.guest_mode).toUpperCase() === "TRUE") agentMap[agent].guest++; else agentMap[agent].login++;
+    if (r.status === "RESOLVED")  agentMap[agent].resolved++;
+    if (r.status === "DROPPED")   agentMap[agent].dropped++;
+    if (r.status === "ABANDONED") agentMap[agent].abandoned++;
+    const jawab = r.jawab_at  ? new Date(r.jawab_at).getTime()  : null;
+    const end   = r.end_time  ? new Date(r.end_time).getTime()  : null;
+    if (jawab && end && end > jawab) agentMap[agent].durSecs.push((end - jawab) / 1000);
+    agentMap[agent].rows.push(r);
   });
+  const fmtDur = secs => {
+    if (!secs || isNaN(secs)) return "-";
+    const m = Math.floor(secs / 60), s = Math.round(secs % 60);
+    return `${m}:${String(s).padStart(2, "0")}`;
+  };
   const agentRanking = Object.entries(agentMap)
-    .map(([agent, v]) => ({ agent, total: v.total, guest: v.guest, login: v.login, pct: (v.total / total * 100).toFixed(1) }))
+    .map(([agent, v]) => {
+      const avgSec = v.durSecs.length ? v.durSecs.reduce((a, b) => a + b, 0) / v.durSecs.length : null;
+      const rows = v.rows.map(r => ({
+        date:          (r.created_at || "").substring(0, 10),
+        conversation_id: getField(r, 'conv_id', 'Convo id', 'convo_id', 'conversation_id'),
+        customer_name: r.cust_name || "-",
+        duration:      (() => {
+          const j = r.jawab_at  ? new Date(r.jawab_at).getTime()  : null;
+          const e = r.end_time  ? new Date(r.end_time).getTime()  : null;
+          return j && e && e > j ? fmtDur((e - j) / 1000) : "-";
+        })(),
+      }));
+      return { agent, total: v.total, guest: v.guest, login: v.login, resolved: v.resolved, dropped: v.dropped, abandoned: v.abandoned, avgDur: fmtDur(avgSec), pct: (v.total / total * 100).toFixed(1), rows };
+    })
     .sort((a, b) => b.total - a.total);
 
   const dailyMap = {};
