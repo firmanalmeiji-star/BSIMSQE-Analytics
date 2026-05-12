@@ -552,16 +552,22 @@ export default function App() {
             </div>
             <div className="hz-card">
               <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 12px", color: HZ.neutral900 }}>Masalah Audio</h3>
+              {/* Total % */}
+              <div style={{ textAlign: "center", marginBottom: 10 }}>
+                <div className="hz-text-heading-3" style={{ color: HZ.red, fontFamily: "'JetBrains Mono', monospace" }}>
+                  {data.audioIssues?.audioPct}%
+                </div>
+                <div className="hz-text-body-s-regular" style={{ color: HZ.neutral500 }}>
+                  dari total panggilan ({data.audioIssues?.audioTotal?.toLocaleString()} kasus)
+                </div>
+              </div>
+              {/* Guest vs Login breakdown */}
               <div style={{ display: "flex", gap: 8 }}>
-                <MetricMini label="Tidak Ada Suara"    val={data.audioIssues?.tidakAdaSuara}   color={HZ.red}    />
-                <MetricMini label="Agent Tdk Didengar" val={data.audioIssues?.suaraAgentTidak} color={HZ.orange} />
-                <MetricMini
-                  label="Total Audio %"
-                  val={data.totalCalls > 0
-                    ? (((data.audioIssues?.tidakAdaSuara || 0) + (data.audioIssues?.suaraAgentTidak || 0) + (data.audioIssues?.terputusSuara || 0)) / data.totalCalls * 100).toFixed(1) + "%"
-                    : "0%"}
-                  color={HZ.yellow}
-                />
+                <MetricMini label="Guest Mode"   val={`${data.audioIssues?.audioGuestPct}%`} color={HZ.orange} />
+                <MetricMini label="Login"        val={`${data.audioIssues?.audioLoginPct}%`} color={HZ.primary} />
+              </div>
+              <div className="hz-text-body-s-regular" style={{ color: HZ.neutral400, textAlign: "center", marginTop: 6 }}>
+                % dari total kasus audio
               </div>
             </div>
           </div>
@@ -792,16 +798,6 @@ export default function App() {
 
         </>}
 
-        {/* ── Issues Section ── */}
-        {data?.issues?.length > 0 && (
-          <Section title="Identifikasi Masalah" subtitle="Klik kartu untuk melihat detail percakapan">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {data.issues.map((issue, i) => (
-                <IssueCard key={i} issue={issue} onClick={() => setSelectedIssue(issue)} />
-              ))}
-            </div>
-          </Section>
-        )}
 
         {/* ── Issue Detail Modal ── */}
         {selectedIssue && <IssueModal issue={selectedIssue} onClose={() => setSelectedIssue(null)} />}

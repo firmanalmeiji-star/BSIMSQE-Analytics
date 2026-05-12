@@ -45,9 +45,22 @@ export function processCallData(rows, dateFrom, dateTo) {
   const rt = { under10: 0, mid: 0, over20: 0, total: respTimes.length };
   respTimes.forEach(t => { if (t < 10) rt.under10++; else if (t <= 20) rt.mid++; else rt.over20++; });
 
-  const tidakAdaSuara = filtered.filter(r => r.Topic === "Panggilan diakhiri (Tidak ada Suara nasabah)").length;
-  const suaraAgent = filtered.filter(r => r.Topic === "Panggilan diakhiri (Suara agent tidak didengar nasabah)").length;
-  const terputusSuara = filtered.filter(r => r.Topic === "Terputus (Suara nasabah tidak ada)").length;
+  const audioTopics = {
+    tidakAdaSuara:  r => r.Topic === "Panggilan diakhiri (Tidak ada Suara nasabah)",
+    suaraAgent:     r => r.Topic === "Panggilan diakhiri (Suara agent tidak didengar nasabah)",
+    terputusSuara:  r => r.Topic === "Terputus (Suara nasabah tidak ada)",
+  };
+  const isGuest = r => String(r.guest_mode).toUpperCase() === "TRUE";
+  const audioRows = filtered.filter(r => Object.values(audioTopics).some(fn => fn(r)));
+  const tidakAdaSuara  = filtered.filter(audioTopics.tidakAdaSuara).length;
+  const suaraAgent     = filtered.filter(audioTopics.suaraAgent).length;
+  const terputusSuara  = filtered.filter(audioTopics.terputusSuara).length;
+  const audioTotal     = audioRows.length;
+  const audioGuest     = audioRows.filter(isGuest).length;
+  const audioLogin     = audioTotal - audioGuest;
+  const audioPct       = total > 0 ? (audioTotal / total * 100).toFixed(1) : "0";
+  const audioGuestPct  = audioTotal > 0 ? (audioGuest / audioTotal * 100).toFixed(1) : "0";
+  const audioLoginPct  = audioTotal > 0 ? (audioLogin / audioTotal * 100).toFixed(1) : "0";
 
   const TOPIC_EXCLUDE = new Set([
     "Panggilan diakhiri (Tidak ada Suara nasabah)",
@@ -158,7 +171,7 @@ export function processCallData(rows, dateFrom, dateTo) {
     resolved, dropped, abandoned, prequeue,
     guestMode, nonGuestMode: total - guestMode, guestName, loginName: total - guestName,
     responseTime: { under10: rt.total ? (rt.under10 / rt.total * 100).toFixed(2) : 0, "10to20": rt.total ? (rt.mid / rt.total * 100).toFixed(2) : 0, over20: rt.total ? (rt.over20 / rt.total * 100).toFixed(2) : 0 },
-    audioIssues: { tidakAdaSuara, suaraAgentTidak: suaraAgent, terputusSuara },
+    audioIssues: { tidakAdaSuara, suaraAgentTidak: suaraAgent, terputusSuara, audioTotal, audioGuest, audioLogin, audioPct, audioGuestPct, audioLoginPct },
     topicBreakdown, dailyCalls,
     statusByMode, hourlyData, waitingTime, agentRanking,
     feedbackAnalysis: { total: fbs.length, positiveSamples: pos, negAppSamples: negApp, negServiceSamples: negSvc },
