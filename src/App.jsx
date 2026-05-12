@@ -139,7 +139,7 @@ function IssueModal({ issue, onClose }) {
                   {issue.rows.map((row, i) => (
                     <tr key={i}>
                       <td>{row.date || "-"}</td>
-                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>{row.conversation_id}</td>
+                      <td style={{ fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap", wordBreak: "keep-all" }}>{row.conversation_id}</td>
                       <td>{row.customer_name}</td>
                       <td>{row.agent_name}</td>
                     </tr>
