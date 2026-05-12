@@ -281,13 +281,31 @@ export function processKYCData(rows, dateFrom, dateTo) {
   if (dataRows.length > 0) issues.push({ type: "Data Tidak Sesuai", description: "Data verifikasi tidak cocok dengan KTP", count: dataRows.length, rows: toDetailKyc(dataRows) });
   issues.sort((a, b) => b.count - a.count);
 
+  const agentKycMap = {};
+  filtered.forEach(r => {
+    const name = (r.agent_name || "").trim() || "Unknown";
+    if (!agentKycMap[name]) agentKycMap[name] = { total: 0, approved: 0, rejected: 0 };
+    agentKycMap[name].total++;
+    if (r.kyc_status === "COMPLETED") agentKycMap[name].approved++;
+    if (r.kyc_status === "FAILED")    agentKycMap[name].rejected++;
+  });
+  const agentRanking = Object.entries(agentKycMap)
+    .sort((a, b) => b[1].total - a[1].total)
+    .map(([agent, v]) => ({
+      agent,
+      total:    v.total,
+      approved: v.approved,
+      rejected: v.rejected,
+      pct: (v.total / Math.max(1, total) * 100).toFixed(1),
+    }));
+
   return {
     totalCalls: total, uniqueUsers: uniq.size, attemptPerUser: (total / Math.max(1, uniq.size)).toFixed(1),
     resolved, dropped, abandoned: filtered.filter(r => r.status === "ABANDONED").length,
     completed, failed, pending, conversionRate: ((completed / Math.max(1, completed + failed + pending)) * 100).toFixed(2),
     assignmentTime: { under10: waitTimes.length ? (u10w / waitTimes.length * 100).toFixed(2) : 0 },
     responseTime: { under10: rt.total ? (rt.u10 / rt.total * 100).toFixed(2) : 0, "10to20": rt.total ? (rt.mid / rt.total * 100).toFixed(2) : 0, over20: rt.total ? (rt.o20 / rt.total * 100).toFixed(2) : 0 },
-    funnelData, rejectedIssues,
+    funnelData, rejectedIssues, agentRanking,
     rejectionReasons: Object.entries(rejMap).sort((a, b) => b[1].length - a[1].length).map(([reason, rows]) => ({ reason, count: rows.length, rows: toDetailKyc(rows) })),
     topicBreakdown: Object.entries(topicMap).sort((a, b) => b[1] - a[1]).map(([topic, count]) => ({ topic, count })),
     dailyCalls: Object.entries(dailyMap).sort().map(([d, v]) => ({ date: d.substring(5), total: v.total, unique: v.unique.size, completed: v.completed, failed: v.failed })),

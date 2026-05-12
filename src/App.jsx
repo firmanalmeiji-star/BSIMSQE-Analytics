@@ -732,6 +732,47 @@ export default function App() {
             </div>
           </div>
 
+          {/* KYC Agent Ranking */}
+          {data.agentRanking?.length > 0 && (
+            <div className="hz-card" style={{ marginBottom: 20 }}>
+              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 4px", color: HZ.neutral900 }}>Ranking Agent KYC</h3>
+              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Diurutkan berdasarkan total panggilan KYC yang ditangani</p>
+              <div className="hz-table-container">
+                <table className="hz-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 40 }}>#</th>
+                      <th>Nama Agent</th>
+                      <th className="align-right">Total</th>
+                      <th className="align-right">Disetujui</th>
+                      <th className="align-right">Ditolak</th>
+                      <th className="align-right">% dari Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.agentRanking.map((a, i) => (
+                      <tr key={i}>
+                        <td className="hz-text-body-s-bold" style={{ color: HZ.neutral400 }}>{i + 1}</td>
+                        <td className="hz-text-body-r-semibold" style={{ color: HZ.neutral900 }}>{a.agent}</td>
+                        <td className="align-right hz-text-body-r-bold" style={{ color: HZ.primary, fontFamily: "monospace" }}>{a.total.toLocaleString()}</td>
+                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.green }}>{a.approved.toLocaleString()}</td>
+                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.red }}>{a.rejected.toLocaleString()}</td>
+                        <td className="align-right">
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                            <div style={{ width: 60, height: 6, borderRadius: 3, background: HZ.neutral100, overflow: "hidden" }}>
+                              <div style={{ width: `${Math.min(100, a.pct)}%`, height: "100%", background: HZ.primary, borderRadius: 3 }} />
+                            </div>
+                            <span className="hz-text-body-s-bold" style={{ color: HZ.neutral700, minWidth: 40, textAlign: "right" }}>{a.pct}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {data.topicBreakdown?.length > 0 && (
             <div className="hz-card" style={{ marginBottom: 20 }}>
               <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 12px", color: HZ.neutral900 }}>Breakdown Topik KYC</h3>
