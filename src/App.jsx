@@ -107,7 +107,7 @@ function IssueModal({ issue, onClose }) {
       className="hz-dialog-overlay"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="hz-dialog" style={{ maxWidth: 720, width: "90vw" }}>
+      <div className="hz-dialog" style={{ maxWidth: 900, width: "95vw" }}>
         <div className="hz-dialog__header">
           <div>
             <div className="hz-dialog__title">{issue.type}</div>
@@ -119,34 +119,32 @@ function IssueModal({ issue, onClose }) {
             </svg>
           </button>
         </div>
-        <div className="hz-dialog__body" style={{ padding: 0, maxHeight: "60vh", overflowY: "auto" }}>
+        <div className="hz-dialog__body" style={{ padding: 0, maxHeight: "60vh", overflow: "auto" }}>
           {(!issue.rows || issue.rows.length === 0) ? (
             <div style={{ padding: "32px", textAlign: "center" }}>
               <p className="hz-text-body-r-regular" style={{ color: HZ.neutral500 }}>Tidak ada detail data tersedia.</p>
             </div>
           ) : (
-            <div className="hz-table-container" style={{ border: "none", borderRadius: 0 }}>
-              <table className="hz-table">
-                <thead>
-                  <tr>
-                    <th>Tanggal</th>
-                    <th>Conversation ID</th>
-                    <th>Nama Nasabah</th>
-                    <th>Nama Agent</th>
+            <table className="hz-table" style={{ minWidth: "100%" }}>
+              <thead>
+                <tr>
+                  <th style={{ minWidth: 100 }}>Tanggal</th>
+                  <th style={{ minWidth: 320 }}>Conversation ID</th>
+                  <th style={{ minWidth: 140 }}>Nama Nasabah</th>
+                  <th style={{ minWidth: 120 }}>Nama Agent</th>
+                </tr>
+              </thead>
+              <tbody>
+                {issue.rows.map((row, i) => (
+                  <tr key={i}>
+                    <td>{row.date || "-"}</td>
+                    <td style={{ fontFamily: "monospace", fontSize: 13, whiteSpace: "pre" }}>{row.conversation_id}</td>
+                    <td>{row.customer_name}</td>
+                    <td>{row.agent_name}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {issue.rows.map((row, i) => (
-                    <tr key={i}>
-                      <td>{row.date || "-"}</td>
-                      <td style={{ fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap", wordBreak: "keep-all" }}>{row.conversation_id}</td>
-                      <td>{row.customer_name}</td>
-                      <td>{row.agent_name}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
         <div className="hz-dialog__footer" style={{ justifyContent: "space-between" }}>
@@ -197,21 +195,50 @@ function IssueCard({ issue, onClick }) {
 
 // ── Feedback Table ────────────────────────────────────────────────────────────
 function FeedbackTable({ items = [], type }) {
+  const [query, setQuery] = useState("");
   const color = type === "positive" ? HZ.green : type === "negApp" ? HZ.red : HZ.orange;
   const label = type === "positive" ? "Positive" : type === "negApp" ? "Negative (App)" : "Negative (Service)";
+
+  const visible = query.trim()
+    ? items.filter(fb => fb.toLowerCase().includes(query.trim().toLowerCase()))
+    : items;
+
   return (
-    <div className="hz-card" style={{ flex: 1, minWidth: 200 }}>
-      <div className="hz-text-body-s-bold" style={{ color, marginBottom: 8, textTransform: "uppercase", letterSpacing: "1px" }}>
-        {label} ({items.length})
+    <div className="hz-card" style={{ flex: 1, minWidth: 220 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <span className="hz-text-body-s-bold" style={{ color, textTransform: "uppercase", letterSpacing: "1px" }}>
+          {label}
+        </span>
+        <span className="hz-badge hz-badge--neutral">{visible.length}/{items.length}</span>
       </div>
-      <div style={{ maxHeight: 200, overflowY: "auto" }}>
-        {items.map((fb, i) => (
+      <input
+        type="text"
+        placeholder="Cari feedback..."
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        style={{
+          width: "100%",
+          marginBottom: 8,
+          background: "var(--hz-neutral-50, #F8F9FA)",
+          border: `1px solid ${HZ.neutral300}`,
+          borderRadius: 6,
+          padding: "5px 10px",
+          fontSize: 12,
+          fontFamily: "inherit",
+          color: HZ.neutral900,
+          outline: "none",
+        }}
+      />
+      <div style={{ maxHeight: 220, overflowY: "auto" }}>
+        {visible.map((fb, i) => (
           <div key={i} className="hz-text-body-s-regular" style={{ color: HZ.neutral600, padding: "5px 0", borderBottom: `1px solid ${HZ.neutral100}` }}>
             "{fb}"
           </div>
         ))}
-        {items.length === 0 && (
-          <div className="hz-text-body-s-regular" style={{ color: HZ.neutral400, fontStyle: "italic" }}>Tidak ada data</div>
+        {visible.length === 0 && (
+          <div className="hz-text-body-s-regular" style={{ color: HZ.neutral400, fontStyle: "italic" }}>
+            {query ? "Tidak ada hasil untuk pencarian ini" : "Tidak ada data"}
+          </div>
         )}
       </div>
     </div>
@@ -233,6 +260,58 @@ function MetricMini({ label, val, color }) {
         {typeof val === "number" ? val.toLocaleString() : val}
       </div>
       <div className="hz-text-body-s-regular" style={{ color: HZ.neutral500, marginTop: 2 }}>{label}</div>
+    </div>
+  );
+}
+
+// ── KYC Funnel ────────────────────────────────────────────────────────────────
+function KYCFunnel({ data }) {
+  if (!data?.length) return null;
+  const max = data[0].value;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {data.map((step, i) => {
+        const pct = max > 0 ? (step.value / max) : 0;
+        const barW = `${Math.max(20, pct * 100)}%`;
+        return (
+          <div key={i}>
+            {/* Drop rate connector */}
+            {step.drop !== null && (
+              <div style={{ display: "flex", alignItems: "center", padding: "6px 0 6px 180px", gap: 8 }}>
+                <div style={{ width: 1, height: 20, background: HZ.neutral300, marginLeft: 16 }} />
+                <span className="hz-badge hz-badge--error" style={{ fontSize: 11 }}>
+                  ↓ Drop {step.drop}% · -{(data[i-1].value - step.value).toLocaleString()} konv.
+                </span>
+              </div>
+            )}
+            {/* Funnel bar */}
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div className="hz-text-body-s-semibold" style={{ width: 160, textAlign: "right", color: HZ.neutral700, flexShrink: 0 }}>
+                {step.stage}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  width: barW,
+                  height: 44,
+                  background: step.color,
+                  borderRadius: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  paddingLeft: 14,
+                  transition: "width 0.4s ease",
+                }}>
+                  <span style={{ color: "#fff", fontWeight: 700, fontSize: 16, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {step.value.toLocaleString()}
+                  </span>
+                  <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 11, marginLeft: 8 }}>
+                    ({(pct * 100).toFixed(1)}%)
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -395,6 +474,7 @@ export default function App() {
             </div>
           </Section>
 
+          {/* Row 1 — Daily Volume + Status Pie */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
             <div className="hz-card">
               <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 12px", color: HZ.neutral900 }}>Volume Panggilan Harian</h3>
@@ -424,8 +504,7 @@ export default function App() {
                     cx="50%" cy="50%" outerRadius={75} innerRadius={40}
                     dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
-                    style={{ fontSize: 9 }}
+                    labelLine={false} style={{ fontSize: 9 }}
                   >
                     {[HZ.green, HZ.red, HZ.yellow, HZ.neutral400].map((c, i) => <Cell key={i} fill={c} />)}
                   </Pie>
@@ -435,20 +514,47 @@ export default function App() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+          {/* Row 2 — Status by Guest/Login */}
+          {data.statusByMode?.length > 0 && (
+            <div className="hz-card" style={{ marginBottom: 20 }}>
+              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 12px", color: HZ.neutral900 }}>Status Percakapan — Guest Mode vs Login</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={data.statusByMode}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={HZ.neutral200} />
+                  <XAxis dataKey="status" tick={{ fill: HZ.neutral600, fontSize: 11 }} />
+                  <YAxis tick={{ fill: HZ.neutral500, fontSize: 10 }} />
+                  <Tooltip content={<Tip />} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Bar dataKey="guest" name="Tamu"  fill={HZ.orange} stackId="a" />
+                  <Bar dataKey="login" name="Login" fill={HZ.primary} stackId="a" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Row 3 — Response Time + Waiting Time + Audio */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 20 }}>
             <div className="hz-card">
               <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 12px", color: HZ.neutral900 }}>Waktu Respons (Agen)</h3>
               <div style={{ display: "flex", gap: 8 }}>
-                <MetricMini label="< 10 detik"  val={`${data.responseTime?.under10}%`}         color={HZ.green}  />
-                <MetricMini label="11–20 detik" val={`${data.responseTime?.["10to20"]}%`}       color={HZ.yellow} />
-                <MetricMini label="> 20 detik"  val={`${data.responseTime?.over20}%`}           color={HZ.red}    />
+                <MetricMini label="< 10 detik"  val={`${data.responseTime?.under10}%`}   color={HZ.green}  />
+                <MetricMini label="11–20 detik" val={`${data.responseTime?.["10to20"]}%`} color={HZ.yellow} />
+                <MetricMini label="> 20 detik"  val={`${data.responseTime?.over20}%`}     color={HZ.red}    />
               </div>
             </div>
             <div className="hz-card">
-              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 12px", color: HZ.neutral900 }}>Ringkasan Masalah Audio</h3>
+              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 12px", color: HZ.neutral900 }}>Waiting Time (Nasabah)</h3>
               <div style={{ display: "flex", gap: 8 }}>
-                <MetricMini label="Tidak Ada Suara"    val={data.audioIssues?.tidakAdaSuara}    color={HZ.red}    />
-                <MetricMini label="Agent Tdk Didengar" val={data.audioIssues?.suaraAgentTidak}  color={HZ.orange} />
+                <MetricMini label="< 10 detik"  val={`${data.waitingTime?.under10}%`}   color={HZ.green}  />
+                <MetricMini label="11–20 detik" val={`${data.waitingTime?.["10to20"]}%`} color={HZ.yellow} />
+                <MetricMini label="> 20 detik"  val={`${data.waitingTime?.over20}%`}     color={HZ.red}    />
+              </div>
+            </div>
+            <div className="hz-card">
+              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 12px", color: HZ.neutral900 }}>Masalah Audio</h3>
+              <div style={{ display: "flex", gap: 8 }}>
+                <MetricMini label="Tidak Ada Suara"    val={data.audioIssues?.tidakAdaSuara}   color={HZ.red}    />
+                <MetricMini label="Agent Tdk Didengar" val={data.audioIssues?.suaraAgentTidak} color={HZ.orange} />
                 <MetricMini
                   label="Total Audio %"
                   val={data.totalCalls > 0
@@ -459,6 +565,27 @@ export default function App() {
               </div>
             </div>
           </div>
+
+          {/* Row 4 — Jam Sibuk */}
+          {data.hourlyData?.length > 0 && (
+            <div className="hz-card" style={{ marginBottom: 20 }}>
+              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 4px", color: HZ.neutral900 }}>Jam Sibuk</h3>
+              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Jumlah percakapan per jam berdasarkan status (WIB)</p>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={data.hourlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={HZ.neutral200} />
+                  <XAxis dataKey="hour" tick={{ fill: HZ.neutral500, fontSize: 9 }} />
+                  <YAxis tick={{ fill: HZ.neutral500, fontSize: 10 }} />
+                  <Tooltip content={<Tip />} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Bar dataKey="resolved"  name="Resolved"  fill={HZ.green}        stackId="a" />
+                  <Bar dataKey="dropped"   name="Dropped"   fill={HZ.red}          stackId="a" />
+                  <Bar dataKey="abandoned" name="Abandoned" fill={HZ.yellow}       stackId="a" />
+                  <Bar dataKey="prequeue"  name="Pre-Queue" fill={HZ.neutral400}   stackId="a" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
 
           {data.topicBreakdown?.length > 0 && (
             <div className="hz-card" style={{ marginBottom: 20 }}>
@@ -474,6 +601,47 @@ export default function App() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Agent Ranking */}
+          {data.agentRanking?.length > 0 && (
+            <div className="hz-card" style={{ marginBottom: 20 }}>
+              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 4px", color: HZ.neutral900 }}>Ranking Agent</h3>
+              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Diurutkan berdasarkan total panggilan yang ditangani</p>
+              <div className="hz-table-container">
+                <table className="hz-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 40 }}>#</th>
+                      <th>Nama Agent</th>
+                      <th className="align-right">Total</th>
+                      <th className="align-right">Tamu</th>
+                      <th className="align-right">Login</th>
+                      <th className="align-right">% dari Total Call</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.agentRanking.map((a, i) => (
+                      <tr key={i}>
+                        <td className="hz-text-body-s-bold" style={{ color: HZ.neutral400 }}>{i + 1}</td>
+                        <td className="hz-text-body-r-semibold" style={{ color: HZ.neutral900 }}>{a.agent}</td>
+                        <td className="align-right hz-text-body-r-bold" style={{ color: HZ.primary, fontFamily: "monospace" }}>{a.total.toLocaleString()}</td>
+                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.orange }}>{a.guest.toLocaleString()}</td>
+                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.green }}>{a.login.toLocaleString()}</td>
+                        <td className="align-right">
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                            <div style={{ width: 60, height: 6, borderRadius: 3, background: HZ.neutral100, overflow: "hidden" }}>
+                              <div style={{ width: `${Math.min(100, a.pct)}%`, height: "100%", background: HZ.primary, borderRadius: 3 }} />
+                            </div>
+                            <span className="hz-text-body-s-bold" style={{ color: HZ.neutral700, minWidth: 40, textAlign: "right" }}>{a.pct}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -520,9 +688,18 @@ export default function App() {
               </ResponsiveContainer>
             </div>
             <div className="hz-card">
-              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 12px", color: HZ.neutral900 }}>Alasan Penolakan</h3>
+              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 4px", color: HZ.neutral900 }}>Alasan Penolakan</h3>
+              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Klik bar untuk lihat detail percakapan</p>
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={data.rejectionReasons} layout="vertical">
+                <BarChart
+                  data={data.rejectionReasons}
+                  layout="vertical"
+                  style={{ cursor: "pointer" }}
+                  onClick={e => {
+                    const entry = e?.activePayload?.[0]?.payload;
+                    if (entry) setSelectedIssue({ type: entry.reason, description: "Alasan penolakan KYC", count: entry.count, rows: entry.rows || [] });
+                  }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke={HZ.neutral200} />
                   <XAxis type="number" tick={{ fill: HZ.neutral500, fontSize: 10 }} />
                   <YAxis dataKey="reason" type="category" tick={{ fill: HZ.neutral600, fontSize: 9 }} width={180} />
@@ -571,6 +748,7 @@ export default function App() {
               </ResponsiveContainer>
             </div>
           )}
+
         </>}
 
         {/* ── Issues Section ── */}

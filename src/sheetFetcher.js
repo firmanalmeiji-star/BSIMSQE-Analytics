@@ -192,7 +192,7 @@ export function processKYCData(rows, dateFrom, dateTo) {
   respTimes.forEach(t => { if (t < 10) rt.u10++; else if (t <= 20) rt.mid++; else rt.o20++; });
 
   const rejMap = {};
-  filtered.forEach(r => { const rr = (r.rejection_reason || "").trim(); if (rr) rejMap[rr] = (rejMap[rr] || 0) + 1; });
+  filtered.forEach(r => { const rr = (r.rejection_reason || "").trim(); if (rr) { if (!rejMap[rr]) rejMap[rr] = []; rejMap[rr].push(r); } });
 
   const topicMap = {};
   filtered.forEach(r => { const t = (r.Topic || "").trim(); if (t) topicMap[t] = (topicMap[t] || 0) + 1; });
@@ -288,7 +288,7 @@ export function processKYCData(rows, dateFrom, dateTo) {
     assignmentTime: { under10: waitTimes.length ? (u10w / waitTimes.length * 100).toFixed(2) : 0 },
     responseTime: { under10: rt.total ? (rt.u10 / rt.total * 100).toFixed(2) : 0, "10to20": rt.total ? (rt.mid / rt.total * 100).toFixed(2) : 0, over20: rt.total ? (rt.o20 / rt.total * 100).toFixed(2) : 0 },
     funnelData, rejectedIssues,
-    rejectionReasons: Object.entries(rejMap).sort((a, b) => b[1] - a[1]).map(([reason, count]) => ({ reason, count })),
+    rejectionReasons: Object.entries(rejMap).sort((a, b) => b[1].length - a[1].length).map(([reason, rows]) => ({ reason, count: rows.length, rows: toDetailKyc(rows) })),
     topicBreakdown: Object.entries(topicMap).sort((a, b) => b[1] - a[1]).map(([topic, count]) => ({ topic, count })),
     dailyCalls: Object.entries(dailyMap).sort().map(([d, v]) => ({ date: d.substring(5), total: v.total, unique: v.unique.size, completed: v.completed, failed: v.failed })),
     issues
