@@ -240,15 +240,30 @@ export function processKYCData(rows, dateFrom, dateTo) {
   const total = filtered.length;
   if (total === 0) return null;
 
-  const uniq = new Set(filtered.map(r => (r.cust_name || "").trim()).filter(Boolean));
+  // Unique users excluding guest
+  const isGuest = r => (r.cust_name || "").trim().toLowerCase() === "guest" || !(r.cust_name || "").trim();
+  const uniq = new Set(filtered.filter(r => !isGuest(r)).map(r => r.cust_name.trim()));
   const resolved = filtered.filter(r => r.status === "RESOLVED").length;
   const dropped = filtered.filter(r => r.status === "DROPPED").length;
-  const completed = filtered.filter(r => r.kyc_status === "COMPLETED").length;
-  const failed = filtered.filter(r => r.kyc_status === "FAILED").length;
-  // Pending = resolved convo but kyc_status is empty, counted as unique users
-  const pendingRows = filtered.filter(r => r.status === "RESOLVED" && !(r.kyc_status || "").trim());
-  const pendingUniq = new Set(pendingRows.map(r => (r.cust_name || "").trim()).filter(Boolean));
-  const pending = pendingUniq.size;
+
+  // Per unique user: find latest resolved call → determine kyc outcome
+  const userLatestResolved = {};
+  filtered
+    .filter(r => !isGuest(r) && r.status === "RESOLVED")
+    .forEach(r => {
+      const name = r.cust_name.trim();
+      const ts = new Date(r.created_at).getTime();
+      if (!userLatestResolved[name] || ts > userLatestResolved[name].ts) {
+        userLatestResolved[name] = { ts, kyc_status: (r.kyc_status || "").trim() };
+      }
+    });
+
+  let completed = 0, failed = 0, pending = 0;
+  Object.values(userLatestResolved).forEach(({ kyc_status }) => {
+    if (kyc_status === "COMPLETED") completed++;
+    else if (kyc_status === "FAILED") failed++;
+    else pending++;
+  });
 
   const waitTimes = filtered.filter(r => r["Wait Time"] && !isNaN(+r["Wait Time"])).map(r => +r["Wait Time"]);
   const u10w = waitTimes.filter(t => t <= 10).length;
