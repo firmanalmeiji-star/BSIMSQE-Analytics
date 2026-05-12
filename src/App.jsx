@@ -427,6 +427,99 @@ function KYCFunnel({ data }) {
   );
 }
 
+// ── Repeat Topic Table with Pagination ────────────────────────────────────────
+const PAGE_SIZE = 10;
+function RepeatTopicTable({ items, onSelect }) {
+  const [page, setPage] = useState(0);
+  const totalPages = Math.ceil(items.length / PAGE_SIZE);
+  const visible = items.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  return (
+    <div className="hz-card" style={{ marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+        <div>
+          <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 2px", color: HZ.neutral900 }}>Topik Berulang per Nasabah</h3>
+          <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: 0 }}>
+            Nasabah yang menelpon dengan topik yang sama lebih dari sekali · klik untuk detail
+          </p>
+        </div>
+        <span className="hz-badge hz-badge--neutral" style={{ flexShrink: 0 }}>{items.length} entri</span>
+      </div>
+
+      <div className="hz-table-container">
+        <table className="hz-table">
+          <thead>
+            <tr>
+              <th style={{ width: 40 }}>#</th>
+              <th>Nama Nasabah</th>
+              <th>Topik</th>
+              <th className="align-right">Frekuensi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visible.map((r, i) => (
+              <tr
+                key={i}
+                style={{ cursor: "pointer" }}
+                onClick={() => onSelect({ type: r.customer, description: `Topik: ${r.topic}`, count: r.count, rows: r.rows, isRepeatTopic: true })}
+                onMouseEnter={e => e.currentTarget.style.background = "#F0F6FF"}
+                onMouseLeave={e => e.currentTarget.style.background = ""}
+              >
+                <td className="hz-text-body-s-bold" style={{ color: HZ.neutral400 }}>{page * PAGE_SIZE + i + 1}</td>
+                <td className="hz-text-body-r-semibold" style={{ color: HZ.neutral900 }}>{r.customer}</td>
+                <td className="hz-text-body-r-regular" style={{ color: HZ.neutral700 }}>{r.topic}</td>
+                <td className="align-right">
+                  <span className="hz-badge" style={{ background: (r.count > 4 ? HZ.red : r.count > 2 ? HZ.orange : HZ.yellow) + "20", color: r.count > 4 ? HZ.red : r.count > 2 ? HZ.orange : HZ.yellow, fontFamily: "monospace" }}>
+                    {r.count}x
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+          <span className="hz-text-body-s-regular" style={{ color: HZ.neutral500 }}>
+            Halaman {page + 1} dari {totalPages} · {items.length} total
+          </span>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              className="hz-btn hz-btn--secondary hz-btn--sm"
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              <span className="hz-btn__label">← Sebelumnya</span>
+            </button>
+            {Array.from({ length: totalPages }, (_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setPage(idx)}
+                style={{
+                  width: 32, height: 32, borderRadius: 6, border: `1px solid ${idx === page ? HZ.primary : HZ.neutral300}`,
+                  background: idx === page ? HZ.primary : "#FFF",
+                  color: idx === page ? "#FFF" : HZ.neutral700,
+                  fontFamily: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                }}
+              >
+                {idx + 1}
+              </button>
+            ))}
+            <button
+              className="hz-btn hz-btn--secondary hz-btn--sm"
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page === totalPages - 1}
+            >
+              <span className="hz-btn__label">Berikutnya →</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function getLastMonday() {
   const d = new Date(); d.setDate(d.getDate() - d.getDay() - 6);
@@ -784,40 +877,7 @@ export default function App() {
 
           {/* Repeat Topic Table */}
           {data.repeatTopics?.length > 0 && (
-            <div className="hz-card" style={{ marginBottom: 20 }}>
-              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 4px", color: HZ.neutral900 }}>Topik Berulang per Nasabah</h3>
-              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Nasabah yang menelpon dengan topik yang sama lebih dari sekali · klik untuk detail</p>
-              <div className="hz-table-container">
-                <table className="hz-table">
-                  <thead>
-                    <tr>
-                      <th>Nama Nasabah</th>
-                      <th>Topik</th>
-                      <th className="align-right">Frekuensi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.repeatTopics.map((r, i) => (
-                      <tr
-                        key={i}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setSelectedIssue({ type: r.customer, description: `Topik: ${r.topic}`, count: r.count, rows: r.rows, isRepeatTopic: true })}
-                        onMouseEnter={e => e.currentTarget.style.background = "#F0F6FF"}
-                        onMouseLeave={e => e.currentTarget.style.background = ""}
-                      >
-                        <td className="hz-text-body-r-semibold" style={{ color: HZ.neutral900 }}>{r.customer}</td>
-                        <td className="hz-text-body-r-regular" style={{ color: HZ.neutral700 }}>{r.topic}</td>
-                        <td className="align-right">
-                          <span className="hz-badge" style={{ background: (r.count > 4 ? HZ.red : r.count > 2 ? HZ.orange : HZ.yellow) + "20", color: r.count > 4 ? HZ.red : r.count > 2 ? HZ.orange : HZ.yellow, fontFamily: "monospace" }}>
-                            {r.count}x
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <RepeatTopicTable items={data.repeatTopics} onSelect={setSelectedIssue} />
           )}
 
           {data.feedbackAnalysis && (
