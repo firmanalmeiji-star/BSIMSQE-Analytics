@@ -486,12 +486,17 @@ export default function App() {
             title="Ringkasan Traffic Panggilan"
             subtitle={`${dateFrom} — ${dateTo} · ${data.totalCalls?.toLocaleString()} total panggilan`}
           >
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
               <Stat label="Total Panggilan"    value={data.totalCalls}    color={HZ.primary} large />
               <Stat label="Pengguna Unik"      value={data.uniqueUsers}   color={HZ.teal}    large />
               <Stat label="Percobaan/Pengguna" value={data.attemptPerUser} color={HZ.purple}  large />
               <Stat label="Mode Tamu"    value={data.guestMode}    sub={`${(data.guestMode    / data.totalCalls * 100).toFixed(1)}%`} color={HZ.orange} large />
               <Stat label="Pengguna Login" value={data.nonGuestMode} sub={`${(data.nonGuestMode / data.totalCalls * 100).toFixed(1)}%`} color={HZ.green}  large />
+            </div>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+              <Stat label="Service Level"      value={`${data.serviceLevel}%`} sub={`${data.resolved} resolved / ${data.totalCalls} total`} color={HZ.green} />
+              <Stat label="Avg Call Length"    value={data.avgCallLen}          sub="rata-rata durasi resolved" color={HZ.teal} />
+              <Stat label="Repeat Calls"       value={data.repeatCalls}         sub={`dari ${data.repeatUsers} pengguna`} color={HZ.orange} />
             </div>
           </Section>
 

@@ -191,8 +191,33 @@ export function processCallData(rows, dateFrom, dateTo) {
   if (totalAudio > 10 && guestAudioRows.length / totalAudio > 0.6) issues.push({ type: "Guest Mode Audio Disproportion", description: `Guest = ${(guestAudioRows.length / totalAudio * 100).toFixed(0)}% audio issues vs ${(guestMode / total * 100).toFixed(0)}% total calls`, count: guestAudioRows.length, rows: toDetail(guestAudioRows) });
   issues.sort((a, b) => b.count - a.count);
 
+  // Service Level = resolved / total * 100
+  const serviceLevel = (resolved / total * 100).toFixed(1);
+
+  // Average Call Length = avg duration of resolved calls (jawab_at → end_time)
+  const resolvedRows = filtered.filter(r => r.status === "RESOLVED");
+  const resolvedDurs = resolvedRows.map(r => {
+    const j = r.jawab_at ? new Date(r.jawab_at).getTime() : null;
+    const e = r.end_time ? new Date(r.end_time).getTime() : null;
+    return j && e && e > j ? (e - j) / 1000 : null;
+  }).filter(v => v !== null);
+  const avgCallLenSec = resolvedDurs.length ? resolvedDurs.reduce((a, b) => a + b, 0) / resolvedDurs.length : null;
+  const avgCallLen = avgCallLenSec
+    ? `${Math.floor(avgCallLenSec / 60)}:${String(Math.round(avgCallLenSec % 60)).padStart(2, "0")}`
+    : "-";
+
+  // Repeat Calls = calls from customers who called more than once
+  const custCallMap = {};
+  filtered.forEach(r => {
+    const name = (r.cust_name || "").trim();
+    if (name && name.toLowerCase() !== "guest") custCallMap[name] = (custCallMap[name] || 0) + 1;
+  });
+  const repeatUsers  = Object.values(custCallMap).filter(c => c > 1).length;
+  const repeatCalls  = Object.values(custCallMap).filter(c => c > 1).reduce((a, b) => a + b, 0);
+
   return {
     totalCalls: total, uniqueUsers: uniq.size, attemptPerUser: (total / Math.max(1, uniq.size)).toFixed(1),
+    serviceLevel, avgCallLen, repeatCalls, repeatUsers,
     resolved, dropped, abandoned, prequeue,
     guestMode, nonGuestMode: total - guestMode, guestName, loginName: total - guestName,
     responseTime: { under10: rt.total ? (rt.under10 / rt.total * 100).toFixed(2) : 0, "10to20": rt.total ? (rt.mid / rt.total * 100).toFixed(2) : 0, over20: rt.total ? (rt.over20 / rt.total * 100).toFixed(2) : 0 },
