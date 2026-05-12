@@ -219,9 +219,10 @@ function IssueModal({ issue, onClose }) {
               <thead>
                 <tr>
                   <th style={{ minWidth: 100 }}>Tanggal</th>
-                  <th style={{ minWidth: 320 }}>Conversation ID</th>
+                  <th style={{ minWidth: 280 }}>Conversation ID</th>
                   <th style={{ minWidth: 140 }}>Nama Nasabah</th>
-                  <th style={{ minWidth: 90 }}>Durasi</th>
+                  <th style={{ minWidth: 80 }}>Durasi</th>
+                  <th style={{ minWidth: 80 }}>Hold Time</th>
                 </tr>
               </thead>
               <tbody>
@@ -231,6 +232,7 @@ function IssueModal({ issue, onClose }) {
                     <td style={{ fontFamily: "monospace", fontSize: 13, whiteSpace: "pre" }}>{row.conversation_id}</td>
                     <td>{row.customer_name}</td>
                     <td style={{ fontFamily: "monospace" }}>{row.duration}</td>
+                    <td style={{ fontFamily: "monospace", color: row.hold_time !== "-" ? HZ.teal : HZ.neutral400 }}>{row.hold_time}</td>
                   </tr>
                 ))}
               </tbody>
@@ -423,6 +425,50 @@ function KYCFunnel({ data }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ── Satisfaction Score Stat ───────────────────────────────────────────────────
+function SatisfactionStat({ score, count, dist }) {
+  const noData = !score;
+  return (
+    <div style={{
+      background: "#FFFFFF", borderRadius: 12, padding: "14px 18px",
+      border: `1px solid ${HZ.neutral200}`, borderLeft: `3px solid ${HZ.purple}`,
+      flex: 1, minWidth: 180,
+    }}>
+      <div className="hz-text-body-s-bold" style={{ color: HZ.neutral500, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 4 }}>
+        Satisfaction Score
+      </div>
+      {noData ? (
+        <div>
+          <div className="hz-text-heading-5" style={{ color: HZ.neutral300, fontFamily: "'JetBrains Mono', monospace" }}>–</div>
+          <div className="hz-text-body-s-regular" style={{ color: HZ.neutral400, marginTop: 2 }}>Data belum tersedia</div>
+        </div>
+      ) : (
+        <div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <span className="hz-text-heading-5" style={{ color: HZ.purple, fontFamily: "'JetBrains Mono', monospace" }}>{score}</span>
+            <span className="hz-text-body-s-regular" style={{ color: HZ.neutral500 }}>/ 5 · {count} responden</span>
+          </div>
+          {/* Mini star distribution bar */}
+          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+            {(dist || []).slice().reverse().map(({ star, count: c }) => {
+              const max = Math.max(...(dist || []).map(d => d.count), 1);
+              return (
+                <div key={star} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 10, color: HZ.neutral500, width: 14, textAlign: "right" }}>{star}★</span>
+                  <div style={{ flex: 1, height: 5, background: HZ.neutral100, borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{ width: `${(c / max) * 100}%`, height: "100%", background: HZ.purple, borderRadius: 3 }} />
+                  </div>
+                  <span style={{ fontSize: 10, color: HZ.neutral500, width: 20 }}>{c}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -701,6 +747,7 @@ export default function App() {
               <Stat label="Service Level"      value={`${data.serviceLevel}%`} sub={`${data.resolved} resolved / ${data.totalCalls} total`} color={HZ.green} />
               <Stat label="Avg Call Length"    value={data.avgCallLen}          sub="rata-rata durasi resolved" color={HZ.teal} />
               <Stat label="Repeat Calls"       value={data.repeatCalls}         sub={`dari ${data.repeatUsers} pengguna`} color={HZ.orange} />
+              <SatisfactionStat score={data.satisfactionScore} count={data.satisfactionCount} dist={data.satisfactionDist} />
             </div>
           </Section>
 
@@ -860,7 +907,8 @@ export default function App() {
                       <th className="align-right">Resolved</th>
                       <th className="align-right">Dropped</th>
                       <th className="align-right">Abandoned</th>
-                      <th className="align-right">Rata-rata Durasi</th>
+                      <th className="align-right">Avg Durasi</th>
+                      <th className="align-right">Avg Hold</th>
                       <th className="align-right">% Total</th>
                     </tr>
                   </thead>
@@ -880,6 +928,7 @@ export default function App() {
                         <td className="align-right hz-text-body-r-regular" style={{ color: HZ.red }}>{a.dropped.toLocaleString()}</td>
                         <td className="align-right hz-text-body-r-regular" style={{ color: HZ.yellow }}>{a.abandoned.toLocaleString()}</td>
                         <td className="align-right hz-text-body-r-regular" style={{ color: HZ.neutral700, fontFamily: "monospace" }}>{a.avgDur}</td>
+                        <td className="align-right hz-text-body-r-regular" style={{ color: HZ.teal, fontFamily: "monospace" }}>{a.avgHold || "-"}</td>
                         <td className="align-right">
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
                             <div style={{ width: 50, height: 6, borderRadius: 3, background: HZ.neutral100, overflow: "hidden" }}>

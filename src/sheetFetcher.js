@@ -115,7 +115,7 @@ export function processCallData(rows, dateFrom, dateTo) {
   filtered.forEach(r => {
     const agent = (r.agent_name || "").trim();
     if (!agent || agent === "-") return;
-    if (!agentMap[agent]) agentMap[agent] = { total: 0, guest: 0, login: 0, resolved: 0, dropped: 0, abandoned: 0, durSecs: [], rows: [] };
+    if (!agentMap[agent]) agentMap[agent] = { total: 0, guest: 0, login: 0, resolved: 0, dropped: 0, abandoned: 0, durSecs: [], holdSecs: [], rows: [] };
     agentMap[agent].total++;
     if (String(r.guest_mode).toUpperCase() === "TRUE") agentMap[agent].guest++; else agentMap[agent].login++;
     if (r.status === "RESOLVED")  agentMap[agent].resolved++;
@@ -124,6 +124,8 @@ export function processCallData(rows, dateFrom, dateTo) {
     const jawab = r.jawab_at  ? new Date(r.jawab_at).getTime()  : null;
     const end   = r.end_time  ? new Date(r.end_time).getTime()  : null;
     if (jawab && end && end > jawab) agentMap[agent].durSecs.push((end - jawab) / 1000);
+    const ht = +getField(r, 'hold_time', 'Hold Time', 'holdtime', 'hold time');
+    if (!isNaN(ht) && ht > 0) agentMap[agent].holdSecs.push(ht);
     agentMap[agent].rows.push(r);
   });
   const fmtDur = secs => {
@@ -133,18 +135,23 @@ export function processCallData(rows, dateFrom, dateTo) {
   };
   const agentRanking = Object.entries(agentMap)
     .map(([agent, v]) => {
-      const avgSec = v.durSecs.length ? v.durSecs.reduce((a, b) => a + b, 0) / v.durSecs.length : null;
+      const avgSec  = v.durSecs.length  ? v.durSecs.reduce((a, b)  => a + b, 0) / v.durSecs.length  : null;
+      const avgHold = v.holdSecs.length ? v.holdSecs.reduce((a, b) => a + b, 0) / v.holdSecs.length : null;
       const rows = v.rows.map(r => ({
-        date:          (r.created_at || "").substring(0, 10),
+        date:            (r.created_at || "").substring(0, 10),
         conversation_id: getField(r, 'conv_id', 'Convo id', 'convo_id', 'conversation_id'),
-        customer_name: r.cust_name || "-",
-        duration:      (() => {
-          const j = r.jawab_at  ? new Date(r.jawab_at).getTime()  : null;
-          const e = r.end_time  ? new Date(r.end_time).getTime()  : null;
+        customer_name:   r.cust_name || "-",
+        duration: (() => {
+          const j = r.jawab_at ? new Date(r.jawab_at).getTime() : null;
+          const e = r.end_time ? new Date(r.end_time).getTime() : null;
           return j && e && e > j ? fmtDur((e - j) / 1000) : "-";
         })(),
+        hold_time: (() => {
+          const ht = +getField(r, 'hold_time', 'Hold Time', 'holdtime', 'hold time');
+          return !isNaN(ht) && ht > 0 ? fmtDur(ht) : "-";
+        })(),
       }));
-      return { agent, total: v.total, guest: v.guest, login: v.login, resolved: v.resolved, dropped: v.dropped, abandoned: v.abandoned, avgDur: fmtDur(avgSec), pct: (v.total / total * 100).toFixed(1), rows };
+      return { agent, total: v.total, guest: v.guest, login: v.login, resolved: v.resolved, dropped: v.dropped, abandoned: v.abandoned, avgDur: fmtDur(avgSec), avgHold: fmtDur(avgHold), pct: (v.total / total * 100).toFixed(1), rows };
     })
     .sort((a, b) => b.total - a.total);
 
@@ -224,6 +231,18 @@ export function processCallData(rows, dateFrom, dateTo) {
       }),
     }));
 
+  // Satisfaction Score — column "R" (1–5 scale)
+  const ratings = filtered
+    .map(r => +getField(r, 'R', 'rating', 'Rating', 'satisfaction', 'score'))
+    .filter(v => !isNaN(v) && v >= 1 && v <= 5);
+  const satisfactionScore = ratings.length
+    ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
+    : null;
+  const satisfactionCount = ratings.length;
+  const satisfactionDist = [1, 2, 3, 4, 5].map(star => ({
+    star, count: ratings.filter(v => v === star).length,
+  }));
+
   // Service Level = resolved / total * 100
   const serviceLevel = (resolved / total * 100).toFixed(1);
 
@@ -257,6 +276,7 @@ export function processCallData(rows, dateFrom, dateTo) {
     audioIssues: { tidakAdaSuara, suaraAgentTidak: suaraAgent, terputusSuara, audioTotal, audioGuest, audioLogin, audioPct, audioGuestPct, audioLoginPct },
     topicBreakdown, dailyCalls,
     statusByMode, hourlyData, waitingTime, agentRanking, repeatTopics,
+    satisfactionScore, satisfactionCount, satisfactionDist,
     feedbackAnalysis: { total: fbs.length, positiveSamples: pos, negAppSamples: negApp, negServiceSamples: negSvc },
     issues
   };
