@@ -49,9 +49,59 @@ export function processCallData(rows, dateFrom, dateTo) {
   const suaraAgent = filtered.filter(r => r.Topic === "Panggilan diakhiri (Suara agent tidak didengar nasabah)").length;
   const terputusSuara = filtered.filter(r => r.Topic === "Terputus (Suara nasabah tidak ada)").length;
 
+  const TOPIC_EXCLUDE = new Set([
+    "Panggilan diakhiri (Tidak ada Suara nasabah)",
+    "Panggilan diakhiri (Suara agent tidak didengar nasabah)",
+  ]);
   const topicMap = {};
-  filtered.forEach(r => { const t = (r.Topic || "").trim(); if (t && t !== "-") topicMap[t] = (topicMap[t] || 0) + 1; });
+  filtered.forEach(r => { const t = (r.Topic || "").trim(); if (t && t !== "-" && !TOPIC_EXCLUDE.has(t)) topicMap[t] = (topicMap[t] || 0) + 1; });
   const topicBreakdown = Object.entries(topicMap).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([topic, count]) => ({ topic: topic.length > 40 ? topic.substring(0, 40) + "…" : topic, count }));
+
+  // Status by mode (guest vs login per status)
+  const statusModeMap = { RESOLVED: { guest: 0, login: 0 }, DROPPED: { guest: 0, login: 0 }, ABANDONED: { guest: 0, login: 0 }, PRE_QUEUE: { guest: 0, login: 0 } };
+  filtered.forEach(r => {
+    const s = r.status; const isGuest = String(r.guest_mode).toUpperCase() === "TRUE";
+    if (statusModeMap[s]) { if (isGuest) statusModeMap[s].guest++; else statusModeMap[s].login++; }
+  });
+  const statusByMode = Object.entries(statusModeMap)
+    .filter(([, v]) => v.guest + v.login > 0)
+    .map(([s, v]) => ({ status: s.charAt(0) + s.slice(1).toLowerCase().replace("_queue", "-Queue"), guest: v.guest, login: v.login }));
+
+  // Hourly data — WIB (UTC+7)
+  const hourMap = {};
+  for (let h = 0; h < 24; h++) hourMap[h] = { hour: String(h).padStart(2, "0") + ":00", resolved: 0, dropped: 0, abandoned: 0, prequeue: 0, total: 0 };
+  filtered.forEach(r => {
+    const h = (new Date(r.created_at).getUTCHours() + 7) % 24;
+    hourMap[h].total++;
+    if (r.status === "RESOLVED") hourMap[h].resolved++;
+    else if (r.status === "DROPPED") hourMap[h].dropped++;
+    else if (r.status === "ABANDONED") hourMap[h].abandoned++;
+    else if (r.status === "PRE_QUEUE") hourMap[h].prequeue++;
+  });
+  const hourlyData = Object.values(hourMap).filter(h => h.total > 0);
+
+  // Waiting time
+  const waitTimes = filtered.filter(r => r["Wait Time"] && !isNaN(+r["Wait Time"])).map(r => +r["Wait Time"]);
+  const wt = { u10: 0, mid: 0, o20: 0, total: waitTimes.length };
+  waitTimes.forEach(t => { if (t < 10) wt.u10++; else if (t <= 20) wt.mid++; else wt.o20++; });
+  const waitingTime = {
+    under10: wt.total ? (wt.u10 / wt.total * 100).toFixed(1) : "0",
+    "10to20": wt.total ? (wt.mid / wt.total * 100).toFixed(1) : "0",
+    over20:   wt.total ? (wt.o20 / wt.total * 100).toFixed(1) : "0",
+  };
+
+  // Agent ranking
+  const agentMap = {};
+  filtered.forEach(r => {
+    const agent = (r.agent_name || "").trim();
+    if (!agent || agent === "-") return;
+    if (!agentMap[agent]) agentMap[agent] = { total: 0, guest: 0, login: 0 };
+    agentMap[agent].total++;
+    if (String(r.guest_mode).toUpperCase() === "TRUE") agentMap[agent].guest++; else agentMap[agent].login++;
+  });
+  const agentRanking = Object.entries(agentMap)
+    .map(([agent, v]) => ({ agent, total: v.total, guest: v.guest, login: v.login, pct: (v.total / total * 100).toFixed(1) }))
+    .sort((a, b) => b.total - a.total);
 
   const dailyMap = {};
   filtered.forEach(r => {
@@ -72,15 +122,15 @@ export function processCallData(rows, dateFrom, dateTo) {
   const pos = [], negApp = [], negSvc = [];
   fbs.forEach(fb => {
     const l = fb.toLowerCase();
-    if ([...audioKw, ...putusKw, ...connectKw].some(k => l.includes(k))) { if (negApp.length < 15) negApp.push(fb); }
-    else if (posKw.some(k => l.includes(k))) { if (pos.length < 15) pos.push(fb); }
-    else if (fb.length > 10 && negSvc.length < 15) negSvc.push(fb);
+    if ([...audioKw, ...putusKw, ...connectKw].some(k => l.includes(k))) negApp.push(fb);
+    else if (posKw.some(k => l.includes(k))) pos.push(fb);
+    else if (fb.length > 10) negSvc.push(fb);
   });
 
   // Issues
   const toDetail = rows => rows.map(r => ({
     date:            (r.created_at || "").substring(0, 10),
-    conversation_id: getField(r, 'convo_id', 'conversation_id', 'id'),
+    conversation_id: getField(r, 'conv_id', 'Convo id', 'convo_id', 'conversation_id'),
     customer_name:   r.cust_name || "-",
     agent_name:      r.agent_name || "-",
   }));
@@ -110,6 +160,7 @@ export function processCallData(rows, dateFrom, dateTo) {
     responseTime: { under10: rt.total ? (rt.under10 / rt.total * 100).toFixed(2) : 0, "10to20": rt.total ? (rt.mid / rt.total * 100).toFixed(2) : 0, over20: rt.total ? (rt.over20 / rt.total * 100).toFixed(2) : 0 },
     audioIssues: { tidakAdaSuara, suaraAgentTidak: suaraAgent, terputusSuara },
     topicBreakdown, dailyCalls,
+    statusByMode, hourlyData, waitingTime, agentRanking,
     feedbackAnalysis: { total: fbs.length, positiveSamples: pos, negAppSamples: negApp, negServiceSamples: negSvc },
     issues
   };
@@ -159,11 +210,60 @@ export function processKYCData(rows, dateFrom, dateTo) {
 
   const toDetailKyc = rows => rows.map(r => ({
     date:            (r.created_at || "").substring(0, 10),
-    conversation_id: getField(r, 'convo_id', 'conversation_id', 'id'),
+    conversation_id: getField(r, 'conv_id', 'Convo id', 'convo_id', 'conversation_id'),
     customer_name:   r.cust_name || "-",
     agent_name:      r.agent_name || "-",
   }));
 
+  // ── Funnel ──────────────────────────────────────────────────────────────────
+  const berlangsung = filtered.filter(r => !["DROPPED", "ABANDONED", "PRE_QUEUE"].includes(r.status)).length;
+  const kycSelesai  = filtered.filter(r => r.kyc_status && r.kyc_status.trim() !== "").length;
+  const disetujui   = completed;
+  const dropRate = (a, b) => b === 0 ? "0.0" : ((a - b) / a * 100).toFixed(1);
+  const funnelData  = [
+    { stage: "Antrean KYC",     value: total,       drop: null,                           color: "#006CEB" },
+    { stage: "KYC Berlangsung", value: berlangsung,  drop: dropRate(total, berlangsung),   color: "#2CA7E4" },
+    { stage: "KYC Selesai",     value: kycSelesai,   drop: dropRate(berlangsung, kycSelesai), color: "#159367" },
+    { stage: "Disetujui",       value: disetujui,    drop: dropRate(kycSelesai, disetujui),   color: "#E5AC00" },
+  ];
+
+  // ── Rejected Issues (from Topic + Conversation_Summary) ─────────────────────
+  const rejectedRows = filtered.filter(r => r.kyc_status === "FAILED");
+
+  // Topic breakdown for rejected conversations
+  const rejTopicMap = {};
+  rejectedRows.forEach(r => { const t = (r.Topic || "").trim(); if (t && t !== "-") rejTopicMap[t] = (rejTopicMap[t] || 0) + 1; });
+  const rejTopicIssues = Object.entries(rejTopicMap)
+    .sort((a, b) => b[1] - a[1]).slice(0, 8)
+    .map(([type, count]) => ({ type, description: "Topik dipilih agent pada saat KYC ditolak", count, source: "Topik Agent", rows: toDetailKyc(rejectedRows.filter(r => (r.Topic || "").trim() === type)) }));
+
+  // Keyword analysis on Conversation_Summary for rejected rows
+  const SUMMARY_PATTERNS = [
+    { label: "KTP Tidak Jelas / Rusak",      keys: ["ktp", "foto ktp", "blur", "buram", "tidak terbaca", "ktp rusak", "ktp tidak jelas"] },
+    { label: "Data Tidak Sesuai",             keys: ["tidak sesuai", "tidak cocok", "tidak sama", "berbeda", "nama ibu", "tempat lahir", "tanggal lahir"] },
+    { label: "Video / Koneksi Bermasalah",    keys: ["video", "tidak muncul", "freeze", "lag", "terputus", "koneksi", "blank", "hitam"] },
+    { label: "Liveness Check Gagal",          keys: ["liveness", "blink", "kedip", "gerak kepala", "selfie"] },
+    { label: "Nasabah Tidak Kooperatif",      keys: ["tidak kooperatif", "menolak", "tidak mau", "tidak bersedia", "kabur"] },
+    { label: "Timeout / Waktu Habis",         keys: ["timeout", "waktu habis", "expired", "time out"] },
+  ];
+  const rejSummaryIssues = SUMMARY_PATTERNS
+    .map(p => {
+      const matchRows = rejectedRows.filter(r =>
+        p.keys.some(k => (r.Conversation_Summary || "").toLowerCase().includes(k))
+      );
+      return { type: p.label, description: "Terdeteksi dari Conversation Summary", count: matchRows.length, source: "Summary", rows: toDetailKyc(matchRows) };
+    })
+    .filter(i => i.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  // Merge: topic issues first, then summary (deduplicate by label)
+  const seenLabels = new Set();
+  const rejectedIssues = [...rejTopicIssues, ...rejSummaryIssues].filter(i => {
+    if (seenLabels.has(i.type)) return false;
+    seenLabels.add(i.type); return true;
+  });
+
+  // ── General Issues ───────────────────────────────────────────────────────────
   const issues = [];
   const videoRows = filtered.filter(r => (r.Topic || "").includes("Video") || (r.Conversation_Summary || "").toLowerCase().includes("video"));
   if (videoRows.length > 0) issues.push({ type: "Video Nasabah Tidak Muncul", description: "Video nasabah tidak muncul di sisi agent", count: videoRows.length, rows: toDetailKyc(videoRows) });
@@ -179,7 +279,6 @@ export function processKYCData(rows, dateFrom, dateTo) {
 
   const dataRows = filtered.filter(r => ["Nama Ibu Kandung Tidak Sesuai", "Tempat Lahir Tidak Sesuai", "Tanggal Lahir Tidak Sesuai"].includes((r.rejection_reason || "").trim()));
   if (dataRows.length > 0) issues.push({ type: "Data Tidak Sesuai", description: "Data verifikasi tidak cocok dengan KTP", count: dataRows.length, rows: toDetailKyc(dataRows) });
-
   issues.sort((a, b) => b.count - a.count);
 
   return {
@@ -188,6 +287,7 @@ export function processKYCData(rows, dateFrom, dateTo) {
     completed, failed, pending, conversionRate: ((completed / Math.max(1, completed + failed + pending)) * 100).toFixed(2),
     assignmentTime: { under10: waitTimes.length ? (u10w / waitTimes.length * 100).toFixed(2) : 0 },
     responseTime: { under10: rt.total ? (rt.u10 / rt.total * 100).toFixed(2) : 0, "10to20": rt.total ? (rt.mid / rt.total * 100).toFixed(2) : 0, over20: rt.total ? (rt.o20 / rt.total * 100).toFixed(2) : 0 },
+    funnelData, rejectedIssues,
     rejectionReasons: Object.entries(rejMap).sort((a, b) => b[1] - a[1]).map(([reason, count]) => ({ reason, count })),
     topicBreakdown: Object.entries(topicMap).sort((a, b) => b[1] - a[1]).map(([topic, count]) => ({ topic, count })),
     dailyCalls: Object.entries(dailyMap).sort().map(([d, v]) => ({ date: d.substring(5), total: v.total, unique: v.unique.size, completed: v.completed, failed: v.failed })),
