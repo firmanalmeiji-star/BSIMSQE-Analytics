@@ -198,6 +198,32 @@ export function processCallData(rows, dateFrom, dateTo) {
   if (totalAudio > 10 && guestAudioRows.length / totalAudio > 0.6) issues.push({ type: "Guest Mode Audio Disproportion", description: `Guest = ${(guestAudioRows.length / totalAudio * 100).toFixed(0)}% audio issues vs ${(guestMode / total * 100).toFixed(0)}% total calls`, count: guestAudioRows.length, rows: toDetail(guestAudioRows) });
   issues.sort((a, b) => b.count - a.count);
 
+  // Repeat topic calls — same user + same topic, more than once
+  const custTopicMap = {};
+  filtered.forEach(r => {
+    const name = (r.cust_name || "").trim();
+    const topic = (r.Topic || "").trim();
+    if (!name || name.toLowerCase() === "guest" || !topic || topic === "-") return;
+    const key = `${name}||${topic}`;
+    if (!custTopicMap[key]) custTopicMap[key] = { customer: name, topic, rows: [] };
+    custTopicMap[key].rows.push(r);
+  });
+  const repeatTopics = Object.values(custTopicMap)
+    .filter(v => v.rows.length > 1)
+    .sort((a, b) => b.rows.length - a.rows.length)
+    .map(v => ({
+      customer: v.customer,
+      topic: v.topic,
+      count: v.rows.length,
+      rows: v.rows.map(r => {
+        const j = r.jawab_at ? new Date(r.jawab_at).getTime() : null;
+        const e = r.end_time ? new Date(r.end_time).getTime() : null;
+        const durSec = j && e && e > j ? (e - j) / 1000 : null;
+        const dur = durSec ? `${Math.floor(durSec / 60)}:${String(Math.round(durSec % 60)).padStart(2, "0")}` : "-";
+        return { date: (r.created_at || "").substring(0, 10), agent_name: r.agent_name || "-", duration: dur };
+      }),
+    }));
+
   // Service Level = resolved / total * 100
   const serviceLevel = (resolved / total * 100).toFixed(1);
 
@@ -230,7 +256,7 @@ export function processCallData(rows, dateFrom, dateTo) {
     responseTime: { under10: rt.total ? (rt.under10 / rt.total * 100).toFixed(2) : 0, "10to20": rt.total ? (rt.mid / rt.total * 100).toFixed(2) : 0, over20: rt.total ? (rt.over20 / rt.total * 100).toFixed(2) : 0 },
     audioIssues: { tidakAdaSuara, suaraAgentTidak: suaraAgent, terputusSuara, audioTotal, audioGuest, audioLogin, audioPct, audioGuestPct, audioLoginPct },
     topicBreakdown, dailyCalls,
-    statusByMode, hourlyData, waitingTime, agentRanking,
+    statusByMode, hourlyData, waitingTime, agentRanking, repeatTopics,
     feedbackAnalysis: { total: fbs.length, positiveSamples: pos, negAppSamples: negApp, negServiceSamples: negSvc },
     issues
   };

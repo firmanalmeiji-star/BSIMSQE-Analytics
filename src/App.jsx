@@ -87,6 +87,44 @@ const Tip = ({ active, payload, label }) => {
   );
 };
 
+// ── Hourly Tooltip (2-column: guest | login) ──────────────────────────────────
+const HourlyTip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  const get = key => (payload.find(p => p.dataKey === key)?.value || 0);
+  const gTotal = get("gResolved") + get("gDropped") + get("gAbandoned") + get("gPrequeue");
+  const lTotal = get("lResolved") + get("lDropped") + get("lAbandoned") + get("lPrequeue");
+  const col = (title, color, items) => (
+    <div style={{ flex: 1 }}>
+      <div className="hz-text-body-s-bold" style={{ color, marginBottom: 4 }}>{title}</div>
+      {items.map(([name, val, c], i) => (
+        <div key={i} className="hz-text-body-s-regular" style={{ color: c, lineHeight: 1.7 }}>
+          {name}: <b>{val.toLocaleString()}</b>
+        </div>
+      ))}
+    </div>
+  );
+  return (
+    <div style={{ background: "#FFF", border: `1px solid ${HZ.neutral200}`, borderRadius: 8, padding: "10px 14px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", minWidth: 240 }}>
+      <div className="hz-text-body-s-bold" style={{ color: HZ.neutral900, marginBottom: 8 }}>{label}</div>
+      <div style={{ display: "flex", gap: 20 }}>
+        {col(`Guest (${gTotal})`, HZ.orange, [
+          ["Resolved",  get("gResolved"),  HZ.green],
+          ["Dropped",   get("gDropped"),   HZ.red],
+          ["Abandoned", get("gAbandoned"), HZ.yellow],
+          ["Pre-Queue", get("gPrequeue"),  HZ.neutral400],
+        ])}
+        <div style={{ width: 1, background: HZ.neutral200 }} />
+        {col(`Login (${lTotal})`, HZ.primary, [
+          ["Resolved",  get("lResolved"),  HZ.green],
+          ["Dropped",   get("lDropped"),   HZ.red],
+          ["Abandoned", get("lAbandoned"), HZ.yellow],
+          ["Pre-Queue", get("lPrequeue"),  HZ.neutral400],
+        ])}
+      </div>
+    </div>
+  );
+};
+
 // ── Section Wrapper ───────────────────────────────────────────────────────────
 function Section({ title, subtitle, children }) {
   return (
@@ -124,6 +162,25 @@ function IssueModal({ issue, onClose }) {
             <div style={{ padding: "32px", textAlign: "center" }}>
               <p className="hz-text-body-r-regular" style={{ color: HZ.neutral500 }}>Tidak ada detail data tersedia.</p>
             </div>
+          ) : issue.isRepeatTopic ? (
+            <table className="hz-table" style={{ minWidth: "100%" }}>
+              <thead>
+                <tr>
+                  <th style={{ minWidth: 100 }}>Tanggal</th>
+                  <th style={{ minWidth: 140 }}>Nama Agent</th>
+                  <th style={{ minWidth: 90 }}>Durasi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {issue.rows.map((row, i) => (
+                  <tr key={i}>
+                    <td>{row.date || "-"}</td>
+                    <td>{row.agent_name}</td>
+                    <td style={{ fontFamily: "monospace" }}>{row.duration}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : issue.isKycAgent ? (
             <table className="hz-table" style={{ minWidth: "100%" }}>
               <thead>
@@ -640,7 +697,7 @@ export default function App() {
                   <CartesianGrid strokeDasharray="3 3" stroke={HZ.neutral200} />
                   <XAxis dataKey="hour" tick={{ fill: HZ.neutral500, fontSize: 9 }} />
                   <YAxis tick={{ fill: HZ.neutral500, fontSize: 10 }} />
-                  <Tooltip content={<Tip />} />
+                  <Tooltip content={<HourlyTip />} />
                   <Legend wrapperStyle={{ fontSize: 10 }} />
                   {/* Guest stack */}
                   <Bar dataKey="gResolved"  name="Guest Resolved"  fill={HZ.green}               stackId="guest" />
@@ -716,6 +773,44 @@ export default function App() {
                             </div>
                             <span className="hz-text-body-s-bold" style={{ color: HZ.neutral700, minWidth: 36, textAlign: "right" }}>{a.pct}%</span>
                           </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Repeat Topic Table */}
+          {data.repeatTopics?.length > 0 && (
+            <div className="hz-card" style={{ marginBottom: 20 }}>
+              <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 4px", color: HZ.neutral900 }}>Topik Berulang per Nasabah</h3>
+              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Nasabah yang menelpon dengan topik yang sama lebih dari sekali · klik untuk detail</p>
+              <div className="hz-table-container">
+                <table className="hz-table">
+                  <thead>
+                    <tr>
+                      <th>Nama Nasabah</th>
+                      <th>Topik</th>
+                      <th className="align-right">Frekuensi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.repeatTopics.map((r, i) => (
+                      <tr
+                        key={i}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => setSelectedIssue({ type: r.customer, description: `Topik: ${r.topic}`, count: r.count, rows: r.rows, isRepeatTopic: true })}
+                        onMouseEnter={e => e.currentTarget.style.background = "#F0F6FF"}
+                        onMouseLeave={e => e.currentTarget.style.background = ""}
+                      >
+                        <td className="hz-text-body-r-semibold" style={{ color: HZ.neutral900 }}>{r.customer}</td>
+                        <td className="hz-text-body-r-regular" style={{ color: HZ.neutral700 }}>{r.topic}</td>
+                        <td className="align-right">
+                          <span className="hz-badge" style={{ background: (r.count > 4 ? HZ.red : r.count > 2 ? HZ.orange : HZ.yellow) + "20", color: r.count > 4 ? HZ.red : r.count > 2 ? HZ.orange : HZ.yellow, fontFamily: "monospace" }}>
+                            {r.count}x
+                          </span>
                         </td>
                       </tr>
                     ))}
