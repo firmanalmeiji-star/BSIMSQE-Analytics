@@ -124,6 +124,39 @@ function IssueModal({ issue, onClose }) {
             <div style={{ padding: "32px", textAlign: "center" }}>
               <p className="hz-text-body-r-regular" style={{ color: HZ.neutral500 }}>Tidak ada detail data tersedia.</p>
             </div>
+          ) : issue.isKycAgent ? (
+            <table className="hz-table" style={{ minWidth: "100%" }}>
+              <thead>
+                <tr>
+                  <th style={{ minWidth: 100 }}>Tanggal</th>
+                  <th style={{ minWidth: 320 }}>Conversation ID</th>
+                  <th style={{ minWidth: 140 }}>Nama Nasabah</th>
+                  <th style={{ minWidth: 110 }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {issue.rows.map((row, i) => (
+                  <tr key={i}>
+                    <td>{row.date || "-"}</td>
+                    <td style={{ fontFamily: "monospace", fontSize: 13, whiteSpace: "pre" }}>{row.conversation_id}</td>
+                    <td>{row.customer_name}</td>
+                    <td>
+                      <span style={{
+                        display: "inline-block",
+                        padding: "2px 8px",
+                        borderRadius: 4,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        background: row.kyc_status === "COMPLETED" ? HZ.green + "20" : row.kyc_status === "FAILED" ? HZ.red + "20" : HZ.neutral200,
+                        color: row.kyc_status === "COMPLETED" ? HZ.green : row.kyc_status === "FAILED" ? HZ.red : HZ.neutral600,
+                      }}>
+                        {row.kyc_status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : issue.isAgent ? (
             <table className="hz-table" style={{ minWidth: "100%" }}>
               <thead>
@@ -775,7 +808,7 @@ export default function App() {
           {data.agentRanking?.length > 0 && (
             <div className="hz-card" style={{ marginBottom: 20 }}>
               <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 4px", color: HZ.neutral900 }}>Ranking Agent KYC</h3>
-              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Diurutkan berdasarkan total panggilan KYC yang ditangani</p>
+              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>Klik baris untuk lihat detail percakapan agent</p>
               <div className="hz-table-container">
                 <table className="hz-table">
                   <thead>
@@ -790,7 +823,13 @@ export default function App() {
                   </thead>
                   <tbody>
                     {data.agentRanking.map((a, i) => (
-                      <tr key={i}>
+                      <tr
+                        key={i}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => setSelectedIssue({ type: a.agent, description: `${a.total} sesi KYC — Disetujui: ${a.approved} · Ditolak: ${a.rejected}`, count: a.total, rows: a.rows, isKycAgent: true })}
+                        onMouseEnter={e => e.currentTarget.style.background = "#F0F6FF"}
+                        onMouseLeave={e => e.currentTarget.style.background = ""}
+                      >
                         <td className="hz-text-body-s-bold" style={{ color: HZ.neutral400 }}>{i + 1}</td>
                         <td className="hz-text-body-r-semibold" style={{ color: HZ.neutral900 }}>{a.agent}</td>
                         <td className="align-right hz-text-body-r-bold" style={{ color: HZ.primary, fontFamily: "monospace" }}>{a.total.toLocaleString()}</td>

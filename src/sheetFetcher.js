@@ -347,10 +347,16 @@ export function processKYCData(rows, dateFrom, dateTo) {
   const agentKycMap = {};
   filtered.forEach(r => {
     const name = (r.agent_name || "").trim() || "Unknown";
-    if (!agentKycMap[name]) agentKycMap[name] = { total: 0, approved: 0, rejected: 0 };
+    if (!agentKycMap[name]) agentKycMap[name] = { total: 0, approved: 0, rejected: 0, rows: [] };
     agentKycMap[name].total++;
     if (r.kyc_status === "COMPLETED") agentKycMap[name].approved++;
     if (r.kyc_status === "FAILED")    agentKycMap[name].rejected++;
+    agentKycMap[name].rows.push({
+      date:            (r.created_at || "").substring(0, 10),
+      conversation_id: getField(r, 'conv_id', 'Convo id', 'convo_id', 'conversation_id'),
+      customer_name:   r.cust_name || "-",
+      kyc_status:      r.kyc_status || "-",
+    });
   });
   const agentRanking = Object.entries(agentKycMap)
     .sort((a, b) => b[1].total - a[1].total)
@@ -360,6 +366,7 @@ export function processKYCData(rows, dateFrom, dateTo) {
       approved: v.approved,
       rejected: v.rejected,
       pct: (v.total / Math.max(1, total) * 100).toFixed(1),
+      rows: v.rows,
     }));
 
   return {
