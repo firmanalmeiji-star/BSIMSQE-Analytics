@@ -32,7 +32,7 @@ export function processCallData(rows, dateFrom, dateTo) {
   const total = filtered.length;
   if (total === 0) return null;
 
-  const uniq = new Set(filtered.map(r => (r.cust_name || "").trim()).filter(Boolean));
+  const uniq = new Set(filtered.map(r => (r.cust_name || "").trim()).filter(n => n && n.toLowerCase() !== "guest"));
   const resolved = filtered.filter(r => r.status === "RESOLVED").length;
   const dropped = filtered.filter(r => r.status === "DROPPED").length;
   const abandoned = filtered.filter(r => r.status === "ABANDONED").length;
@@ -390,7 +390,7 @@ export function processKYCData(rows, dateFrom, dateTo) {
   return {
     totalCalls: total, uniqueUsers: uniq.size, attemptPerUser: (total / Math.max(1, uniq.size)).toFixed(1),
     resolved, dropped, abandoned: filtered.filter(r => r.status === "ABANDONED").length,
-    completed, failed, pending, conversionRate: ((completed / Math.max(1, completed + failed + pending)) * 100).toFixed(2),
+    completed, failed, pending, conversionRate: ((( completed + failed) / Math.max(1, uniq.size)) * 100).toFixed(2),
     assignmentTime: { under10: waitTimes.length ? (u10w / waitTimes.length * 100).toFixed(2) : 0 },
     responseTime: { under10: rt.total ? (rt.u10 / rt.total * 100).toFixed(2) : 0, "10to20": rt.total ? (rt.mid / rt.total * 100).toFixed(2) : 0, over20: rt.total ? (rt.o20 / rt.total * 100).toFixed(2) : 0 },
     funnelData, rejectedIssues, agentRanking,
