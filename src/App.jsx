@@ -632,41 +632,28 @@ export default function App() {
           {data.hourlyData?.length > 0 && (
             <div className="hz-card" style={{ marginBottom: 20 }}>
               <h3 className="hz-text-body-r-bold" style={{ margin: "0 0 4px", color: HZ.neutral900 }}>Jam Sibuk</h3>
-              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 16px" }}>Jumlah percakapan per jam berdasarkan status (WIB)</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <div>
-                  <div className="hz-text-body-s-semibold" style={{ color: HZ.orange, marginBottom: 6 }}>Guest Mode</div>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={data.hourlyData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={HZ.neutral200} />
-                      <XAxis dataKey="hour" tick={{ fill: HZ.neutral500, fontSize: 8 }} />
-                      <YAxis tick={{ fill: HZ.neutral500, fontSize: 9 }} />
-                      <Tooltip content={<Tip />} />
-                      <Legend wrapperStyle={{ fontSize: 9 }} />
-                      <Bar dataKey="gResolved"  name="Resolved"  fill={HZ.green}      stackId="a" />
-                      <Bar dataKey="gDropped"   name="Dropped"   fill={HZ.red}        stackId="a" />
-                      <Bar dataKey="gAbandoned" name="Abandoned" fill={HZ.yellow}     stackId="a" />
-                      <Bar dataKey="gPrequeue"  name="Pre-Queue" fill={HZ.neutral400} stackId="a" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div>
-                  <div className="hz-text-body-s-semibold" style={{ color: HZ.primary, marginBottom: 6 }}>Login</div>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={data.hourlyData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={HZ.neutral200} />
-                      <XAxis dataKey="hour" tick={{ fill: HZ.neutral500, fontSize: 8 }} />
-                      <YAxis tick={{ fill: HZ.neutral500, fontSize: 9 }} />
-                      <Tooltip content={<Tip />} />
-                      <Legend wrapperStyle={{ fontSize: 9 }} />
-                      <Bar dataKey="lResolved"  name="Resolved"  fill={HZ.green}      stackId="a" />
-                      <Bar dataKey="lDropped"   name="Dropped"   fill={HZ.red}        stackId="a" />
-                      <Bar dataKey="lAbandoned" name="Abandoned" fill={HZ.yellow}     stackId="a" />
-                      <Bar dataKey="lPrequeue"  name="Pre-Queue" fill={HZ.neutral400} stackId="a" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <p className="hz-text-body-s-regular" style={{ color: HZ.neutral500, margin: "0 0 12px" }}>
+                Jumlah percakapan per jam — <span style={{ color: HZ.orange }}>■ Guest</span> vs <span style={{ color: HZ.primary }}>■ Login</span> (WIB)
+              </p>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={data.hourlyData} barCategoryGap="20%" barGap={2}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={HZ.neutral200} />
+                  <XAxis dataKey="hour" tick={{ fill: HZ.neutral500, fontSize: 9 }} />
+                  <YAxis tick={{ fill: HZ.neutral500, fontSize: 10 }} />
+                  <Tooltip content={<Tip />} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  {/* Guest stack */}
+                  <Bar dataKey="gResolved"  name="Guest Resolved"  fill={HZ.green}               stackId="guest" />
+                  <Bar dataKey="gDropped"   name="Guest Dropped"   fill={HZ.red}                 stackId="guest" />
+                  <Bar dataKey="gAbandoned" name="Guest Abandoned" fill={HZ.yellow}              stackId="guest" />
+                  <Bar dataKey="gPrequeue"  name="Guest Pre-Queue" fill={HZ.neutral400}           stackId="guest" radius={[3, 3, 0, 0]} />
+                  {/* Login stack */}
+                  <Bar dataKey="lResolved"  name="Login Resolved"  fill="#0A9A73"                stackId="login" />
+                  <Bar dataKey="lDropped"   name="Login Dropped"   fill="#A01010"                stackId="login" />
+                  <Bar dataKey="lAbandoned" name="Login Abandoned" fill="#B08000"                stackId="login" />
+                  <Bar dataKey="lPrequeue"  name="Login Pre-Queue" fill={HZ.neutral600}           stackId="login" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
 
