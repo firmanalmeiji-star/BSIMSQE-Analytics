@@ -245,7 +245,10 @@ export function processKYCData(rows, dateFrom, dateTo) {
   const dropped = filtered.filter(r => r.status === "DROPPED").length;
   const completed = filtered.filter(r => r.kyc_status === "COMPLETED").length;
   const failed = filtered.filter(r => r.kyc_status === "FAILED").length;
-  const pending = Math.max(0, total - completed - failed - dropped);
+  // Pending = resolved convo but kyc_status is empty, counted as unique users
+  const pendingRows = filtered.filter(r => r.status === "RESOLVED" && !(r.kyc_status || "").trim());
+  const pendingUniq = new Set(pendingRows.map(r => (r.cust_name || "").trim()).filter(Boolean));
+  const pending = pendingUniq.size;
 
   const waitTimes = filtered.filter(r => r["Wait Time"] && !isNaN(+r["Wait Time"])).map(r => +r["Wait Time"]);
   const u10w = waitTimes.filter(t => t <= 10).length;
