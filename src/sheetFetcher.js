@@ -70,7 +70,7 @@ export function processCallData(rows, dateFrom, dateTo) {
   // Issues
   const toDetail = rows => rows.map(r => ({
     date:            (r.created_at || "").substring(0, 10),
-    conversation_id: r.conversation_id || r.id || "-",
+    conversation_id: r.convo_id || r.conversation_id || r.id || "-",
     customer_name:   r.cust_name || "-",
     agent_name:      r.agent_name || "-",
   }));
@@ -149,7 +149,7 @@ export function processKYCData(rows, dateFrom, dateTo) {
 
   const toDetailKyc = rows => rows.map(r => ({
     date:            (r.created_at || "").substring(0, 10),
-    conversation_id: r.conversation_id || r.id || "-",
+    conversation_id: r.convo_id || r.conversation_id || r.id || "-",
     customer_name:   r.cust_name || "-",
     agent_name:      r.agent_name || "-",
   }));
